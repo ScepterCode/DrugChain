@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: drugchain-postgres
+    environment:
+      POSTGRES_USER: drugchain_user
+      POSTGRES_PASSWORD: drugchain_password
+      POSTGRES_DB: drugchain_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - drugchain-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: drugchain-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - drugchain-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: drugchain-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - drugchain-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: drugchain-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://drugchain_user:drugchain_password@postgres:5432/drugchain_db
+      - MONGODB_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    volumes:
+      - ./backend:/app
+    networks:
+      - drugchain-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: drugchain-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - drugchain-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  mongodb_data:
+
+networks:
+  drugchain-network:
+    driver: bridge

@@ -1,0 +1,67 @@
+from pydantic_settings import BaseSettings
+from typing import List, Union
+
+
+class Settings(BaseSettings):
+    # App
+    APP_NAME: str = "DrugChain API"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = True
+    
+    # Server
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    
+    # Database - Supabase PostgreSQL
+    DATABASE_URL: str = "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_DB_NAME: str = "drugchain_logs"
+    REDIS_URL: str = "redis://localhost:6379/0"
+    
+    # Security
+    SECRET_KEY: str = "dev-secret-key-change-in-production-abc123"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Blockchain
+    FABRIC_NETWORK_URL: str = "grpc://localhost:7051"
+    FABRIC_CHAINCODE_NAME: str = "drugchain"
+    FABRIC_CHANNEL_NAME: str = "drugchain-channel"
+    
+    # SMS
+    AFRICASTALKING_USERNAME: str = "sandbox"
+    AFRICASTALKING_API_KEY: str = "sandbox-api-key"
+    AFRICASTALKING_SENDER_ID: str = "DRUGCHAIN"
+    
+    # Storage
+    QR_CODE_STORAGE_PATH: str = "./storage/qr_codes"
+    UPLOAD_MAX_SIZE_MB: int = 10
+    
+    # Blockchain Configuration (Hyperledger Fabric)
+    FABRIC_GATEWAY_URL: str = "http://localhost:8080"
+    FABRIC_CHANNEL: str = "drugchainchannel"
+    FABRIC_CHAINCODE: str = "drugchain"
+    FABRIC_ORG: str = "Org1MSP"
+    FABRIC_USER: str = "admin"
+    BLOCKCHAIN_ENABLED: bool = True
+    
+    # CORS - can be overridden by CORS_ORIGINS env var as comma-separated string
+    CORS_ORIGINS: Union[List[str], str] = "http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173"
+    
+    # Celery
+    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Convert CORS_ORIGINS string to list if needed
+        if isinstance(self.CORS_ORIGINS, str):
+            self.CORS_ORIGINS = [origin.strip() for origin in self.CORS_ORIGINS.split(',')]
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+settings = Settings()

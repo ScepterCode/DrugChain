@@ -1,0 +1,227 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { verificationService, VerificationResponse } from '../services/verificationService';
+import VerificationResult from '../components/verification/VerificationResult';
+
+const VerificationPage: React.FC = () => {
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialPackId = queryParams.get('id') || '';
+
+    const [packId, setPackId] = useState(initialPackId);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<VerificationResponse | null>(null);
+    const [showScanner, setShowScanner] = useState(false);
+
+    // Ref to track if scanner is currently rendered to prevent double-render issues in StrictMode
+    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+
+    useEffect(() => {
+        if (initialPackId) {
+            verify(initialPackId);
+        }
+    }, [initialPackId]);
+
+    useEffect(() => {
+        let scanner: Html5QrcodeScanner | null = null;
+
+        if (showScanner) {
+            // Short timeout to ensure DOM element exists
+            setTimeout(() => {
+                if (!document.getElementById('reader')) return;
+
+                // Clear existing if any (strict mode safety)
+                if (scannerRef.current) {
+                    try { scannerRef.current.clear(); } catch (e) {/* ignore */ }
+                }
+
+                scanner = new Html5QrcodeScanner(
+                    "reader",
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0,
+                        showTorchButtonIfSupported: true
+                    },
+                    /* verbose= */ false
+                );
+
+                scannerRef.current = scanner;
+
+                scanner.render(
+                    (decodedText) => {
+                        handleScan(decodedText);
+                        // Optional: Close scanner on success
+                        // setShowScanner(false); 
+                        // But handleScan calls verify which might update state/UI anyway
+                    },
+                    (_) => {
+                        // parse error, ignore or log
+                    }
+                );
+            }, 100);
+        } else {
+            // Cleanup if showScanner toggles off
+            if (scannerRef.current) {
+                scannerRef.current.clear().catch(console.error);
+                scannerRef.current = null;
+            }
+        }
+
+        return () => {
+            if (scannerRef.current) {
+                scannerRef.current.clear().catch((err) => console.log('Scanner Cleanup Error:', err));
+                scannerRef.current = null;
+            }
+        };
+    }, [showScanner]);
+
+    const verify = async (id: string) => {
+        if (!id.trim()) return;
+        setLoading(true);
+        setShowScanner(false);
+        try {
+            const data = await verificationService.verifyPack(id);
+            setResult(data);
+        } catch (error) {
+            console.error(error);
+            setResult({
+                success: false,
+                verification_result: 'INVALID',
+                message: 'An error occurred while connecting to the server. Please try again.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleScan = (text: string) => {
+        if (text) {
+            // Parse ID from URL or use raw text if it looks like an ID
+            let scannedId = text;
+            if (text.includes('id=')) {
+                try {
+                    const urlParams = new URLSearchParams(new URL(text).search);
+                    scannedId = urlParams.get('id') || text;
+                } catch (e) {
+                    // Try manual split if new URL() fails
+                    const parts = text.split('id=');
+                    if (parts.length > 1) {
+                        scannedId = parts[1];
+                    }
+                }
+            }
+
+            // Only update if different or forcing verify
+            setPackId(scannedId);
+            verify(scannedId);
+        }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await verify(packId);
+    };
+
+    const handleReset = () => {
+        setResult(null);
+        setPackId('');
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-8">
+                <div>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                        Verify Product Authenticity
+                    </h2>
+                    <p className="mt-2 text-center text-sm text-gray-600">
+                        Enter the Pack ID found on your drug packaging to instantly verify its origin and safety.
+                    </p>
+                </div>
+
+                {!result ? (
+                    <>
+                        {showScanner ? (
+                            <div className="mb-6">
+                                <div id="reader" className="bg-white p-4 rounded-lg shadow-sm" style={{ width: '100%', minHeight: '300px' }}></div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowScanner(false)}
+                                    className="mt-4 w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Cancel Scan
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="mb-6 text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowScanner(true)}
+                                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                >
+                                    <svg className="mr-2 -ml-1 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                    </svg>
+                                    Scan QR Code
+                                </button>
+                                <div className="mt-4 relative">
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="w-full border-t border-gray-300" />
+                                    </div>
+                                    <div className="relative flex justify-center">
+                                        <span className="px-2 bg-gray-50 text-sm text-gray-500">Or enter manually</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <form className="mt-8 space-y-6" onSubmit={handleVerify}>
+                            <div className="rounded-md shadow-sm -space-y-px">
+                                <div>
+                                    <label htmlFor="pack-id" className="sr-only">Pack ID</label>
+                                    <input
+                                        id="pack-id"
+                                        name="pack-id"
+                                        type="text"
+                                        required
+                                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                        placeholder="Enter Pack ID (e.g. PK-ABC123XYZ)"
+                                        value={packId}
+                                        onChange={(e) => setPackId(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                                >
+                                    {loading ? 'Verifying...' : 'Verify Now'}
+                                </button>
+                            </div>
+                        </form>
+                    </>
+                ) : (
+                    <VerificationResult
+                        result={result.verification_result as any}
+                        message={result.message}
+                        data={result.data}
+                        onScanAnother={handleReset}
+                    />
+                )}
+
+                <div className="text-center mt-8">
+                    <a href="/login" className="font-medium text-primary-600 hover:text-primary-500">
+                        Log in to Manufacturer Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default VerificationPage;

@@ -1,0 +1,14 @@
+from fastapi import APIRouter
+from app.api.v1.endpoints import auth, users, products, batches, verification, analytics, search, supply_chain
+
+api_router = APIRouter()
+
+# Include endpoint routers
+api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+api_router.include_router(users.router, prefix="/users", tags=["Users"])
+api_router.include_router(products.router, prefix="/products", tags=["Products"])
+api_router.include_router(batches.router, prefix="/ids", tags=["ID Generation"])
+api_router.include_router(verification.router, prefix="/verify", tags=["Verification"])
+api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+api_router.include_router(search.router, prefix="/search", tags=["Search & Investigation"])
+api_router.include_router(supply_chain.router, prefix="/supply-chain", tags=["Supply Chain"])
