@@ -7,32 +7,38 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "DrugChain API"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
     # Database - Supabase PostgreSQL
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres")
-    MONGODB_URL: str = "mongodb://localhost:27017"
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+    )
+    MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     MONGODB_DB_NAME: str = "drugchain_logs"
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production-abc123")
+    SECRET_KEY: str = os.getenv(
+        "SECRET_KEY",
+        "dev-secret-key-change-in-production-abc123"
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Blockchain
-    FABRIC_NETWORK_URL: str = "grpc://localhost:7051"
+    FABRIC_NETWORK_URL: str = os.getenv("FABRIC_NETWORK_URL", "grpc://localhost:7051")
     FABRIC_CHAINCODE_NAME: str = "drugchain"
     FABRIC_CHANNEL_NAME: str = "drugchain-channel"
     
     # SMS
-    AFRICASTALKING_USERNAME: str = "sandbox"
-    AFRICASTALKING_API_KEY: str = "sandbox-api-key"
+    AFRICASTALKING_USERNAME: str = os.getenv("AFRICASTALKING_USERNAME", "sandbox")
+    AFRICASTALKING_API_KEY: str = os.getenv("AFRICASTALKING_API_KEY", "sandbox-api-key")
     AFRICASTALKING_SENDER_ID: str = "DRUGCHAIN"
     
     # Storage
@@ -40,19 +46,22 @@ class Settings(BaseSettings):
     UPLOAD_MAX_SIZE_MB: int = 10
     
     # Blockchain Configuration (Hyperledger Fabric)
-    FABRIC_GATEWAY_URL: str = "http://localhost:8080"
+    FABRIC_GATEWAY_URL: str = os.getenv("FABRIC_GATEWAY_URL", "http://localhost:8080")
     FABRIC_CHANNEL: str = "drugchainchannel"
     FABRIC_CHAINCODE: str = "drugchain"
     FABRIC_ORG: str = "Org1MSP"
     FABRIC_USER: str = "admin"
-    BLOCKCHAIN_ENABLED: bool = True
+    BLOCKCHAIN_ENABLED: bool = os.getenv("BLOCKCHAIN_ENABLED", "True").lower() == "true"
     
     # CORS - can be overridden by CORS_ORIGINS env var as comma-separated string
-    CORS_ORIGINS: Union[List[str], str] = "http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173,http://127.0.0.1:3000,https://drug-chain.vercel.app"
+    CORS_ORIGINS: Union[List[str], str] = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173,https://drug-chain.vercel.app"
+    )
     
     # Celery
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1")
+    CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/2")
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
