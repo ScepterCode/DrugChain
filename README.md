@@ -56,7 +56,9 @@ cd blockchain
 
 ## Documentation
 
-See [docs/README.md](./docs/README.md) for comprehensive technical documentation.
+- [Technical Documentation](./docs/README.md) - Comprehensive system documentation
+- [Hosting Guide](./HOSTING_GUIDE.md) - Deploy to Vercel (frontend) and Render (backend)
+- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md) - Step-by-step deployment verification
 
 ## MVP Timeline
 

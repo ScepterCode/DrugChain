@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List, Union
+import os
 
 
 class Settings(BaseSettings):
@@ -13,13 +14,13 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # Database - Supabase PostgreSQL
-    DATABASE_URL: str = "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres")
     MONGODB_URL: str = "mongodb://localhost:27017"
     MONGODB_DB_NAME: str = "drugchain_logs"
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # Security
-    SECRET_KEY: str = "dev-secret-key-change-in-production-abc123"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production-abc123")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     BLOCKCHAIN_ENABLED: bool = True
     
     # CORS - can be overridden by CORS_ORIGINS env var as comma-separated string
-    CORS_ORIGINS: Union[List[str], str] = "http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173"
+    CORS_ORIGINS: Union[List[str], str] = "http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173,http://127.0.0.1:3000,https://drug-chain.vercel.app"
     
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
