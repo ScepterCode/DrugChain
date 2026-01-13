@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, products, batches, verification, analytics, search, supply_chain
+from app.api.v1.endpoints import auth, users, products, batches, verification, analytics, search, supply_chain, notifications
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(verification.router, prefix="/verify", tags=["Verifica
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 api_router.include_router(search.router, prefix="/search", tags=["Search & Investigation"])
 api_router.include_router(supply_chain.router, prefix="/supply-chain", tags=["Supply Chain"])
+api_router.include_router(notifications.router, prefix="", tags=["Notifications"])
