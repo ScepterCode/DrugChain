@@ -2,6 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -11,10 +16,22 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
+# Define CORS origins explicitly
+CORS_ORIGINS = [
+    "https://drug-chain.vercel.app",  # Production frontend
+    "http://localhost:3000",         # Local dev (React)
+    "http://localhost:5173",         # Local dev (Vite)
+    "http://localhost:5174",         # Local dev (Vite alt)
+    "http://127.0.0.1:3000",         # Local dev (127.0.0.1)
+]
+
+# Log CORS configuration
+logger.info(f"CORS Origins configured: {CORS_ORIGINS}")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
