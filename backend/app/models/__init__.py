@@ -4,6 +4,13 @@ from app.models.organization import Organization, Manufacturer, OrganizationType
 from app.models.product import Product
 from app.models.product_category import ProductCategory, ProductAttribute, Certification
 from app.models.batch import Batch, Carton, Pack, BatchStatus, PackStatus
+from app.models.industry_specifications import (
+    ElectronicsSpecification,
+    LuxurySpecification,
+    FoodSpecification,
+    AutomotiveSpecification,
+    CosmeticsSpecification
+)
 
 __all__ = [
     "User",
@@ -21,4 +28,9 @@ __all__ = [
     "Pack",
     "BatchStatus",
     "PackStatus",
+    "ElectronicsSpecification",
+    "LuxurySpecification",
+    "FoodSpecification",
+    "AutomotiveSpecification",
+    "CosmeticsSpecification",
 ]
