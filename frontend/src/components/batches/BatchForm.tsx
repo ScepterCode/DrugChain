@@ -28,10 +28,23 @@ const BatchForm: React.FC = () => {
             setProducts(data);
             if (data.length > 0) {
                 setFormData(prev => ({ ...prev, product_id: data[0].product_id }));
+            } else {
+                // No products available, but don't show error - allow manual input
+                console.warn("No products available for batch form");
             }
-        } catch (err) {
-            console.error("Failed to load products for batch form");
-            setError("Could not load products. Please ensure you have products in your catalog.");
+        } catch (err: any) {
+            console.error("Failed to load products for batch form:", err);
+            
+            // Only show error for actual failures, not empty results
+            if (err.response?.status === 401) {
+                setError("Authentication required. Please log in to access products.");
+            } else if (err.response?.status === 403) {
+                setError("You don't have permission to view products. Please contact your administrator.");
+            } else if (err.response?.status === 500) {
+                setError("Server error loading products. You can still create batches by manually entering product information.");
+            } else {
+                setError("Could not load products. Please check your connection or contact support.");
+            }
         }
     };
 
@@ -112,21 +125,39 @@ const BatchForm: React.FC = () => {
                             <label htmlFor="product_id" className="block text-sm font-medium text-gray-700">
                                 Select Product
                             </label>
-                            <select
-                                id="product_id"
-                                name="product_id"
-                                required
-                                value={formData.product_id}
-                                onChange={handleChange}
-                                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                            >
-                                <option value="" disabled>Select a product</option>
-                                {products.map(p => (
-                                    <option key={p.product_id} value={p.product_id}>
-                                        {p.product_name} ({p.product_code})
-                                    </option>
-                                ))}
-                            </select>
+                            {products.length > 0 ? (
+                                <select
+                                    id="product_id"
+                                    name="product_id"
+                                    required
+                                    value={formData.product_id}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                >
+                                    <option value="" disabled>Select a product</option>
+                                    {products.map(p => (
+                                        <option key={p.product_id} value={p.product_id}>
+                                            {p.product_name} ({p.product_code})
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <div>
+                                    <input
+                                        type="text"
+                                        name="product_id"
+                                        id="product_id"
+                                        required
+                                        placeholder="Enter Product ID manually"
+                                        value={formData.product_id}
+                                        onChange={handleChange}
+                                        className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Products couldn't be loaded. Enter the Product ID manually.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="col-span-6 sm:col-span-3">

@@ -16,6 +16,11 @@ const ProductList: React.FC = () => {
             const data = await productService.getProducts();
             setProducts(data);
             setError(null);
+            
+            // If no products were returned, show a helpful message
+            if (data.length === 0) {
+                setError("No products available. This could be due to server issues or you may need to add products to your catalog.");
+            }
         } catch (err: any) {
             console.error('Failed to fetch products:', err);
             
@@ -24,7 +29,7 @@ const ProductList: React.FC = () => {
             } else if (err.response?.status === 403) {
                 setError('You do not have permission to view products.');
             } else if (err.response?.status === 500) {
-                setError('Server error. Please try again later or contact support.');
+                setError('Server error. The products service is temporarily unavailable.');
             } else {
                 setError('Failed to load products. Please check your connection and try again.');
             }

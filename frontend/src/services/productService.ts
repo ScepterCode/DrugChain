@@ -29,23 +29,29 @@ export interface ProductCreateData {
 }
 
 export const productService = {
-    // Get all products (tries authenticated endpoint first, falls back to public)
+    // Get all products (tries authenticated endpoint first, falls back to empty array if all fail)
     getProducts: async () => {
         try {
             // Try authenticated endpoint first
             const response = await api.get<Product[]>('/products');
             return response.data;
         } catch (error: any) {
-            // If authentication fails, try public endpoint
+            console.warn('Authenticated products endpoint failed:', error.response?.status);
+            
+            // Try public endpoint if authentication fails
             if (error.response?.status === 401 || error.response?.status === 403) {
                 try {
                     const response = await api.get<Product[]>('/products/public');
                     return response.data;
-                } catch (publicError) {
-                    throw error; // Throw original error if public also fails
+                } catch (publicError: any) {
+                    console.warn('Public products endpoint also failed:', publicError.response?.status);
                 }
             }
-            throw error;
+            
+            // If both endpoints fail, return empty array to prevent app crashes
+            // This allows the app to continue functioning without products
+            console.warn('All products endpoints failed, returning empty array');
+            return [];
         }
     },
 
