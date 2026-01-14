@@ -18,8 +18,13 @@ const ManufacturerDashboard: React.FC = () => {
     useEffect(() => {
         const loadStats = async () => {
             try {
-                const data = await analyticsService.getDashboardStats();
-                setStats(data);
+                const data = await analyticsService.getManufacturerStats();
+                setStats({
+                    total_products: data.total_products || 0,
+                    total_batches: data.total_batches || 0,
+                    total_verifications: data.total_verifications || 0,
+                    verification_rate: data.verification_rate || 0
+                });
             } catch (error) {
                 console.error('Failed to load stats:', error);
             } finally {
@@ -246,11 +251,22 @@ const ManufacturerDashboard: React.FC = () => {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="bg-white shadow rounded-lg p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Verification Trends</h3>
-                    <VerificationChart />
+                    <VerificationChart data={[
+                        { date: '2024-01-01', verifications: 12 },
+                        { date: '2024-02-01', verifications: 19 },
+                        { date: '2024-03-01', verifications: 3 },
+                        { date: '2024-04-01', verifications: 5 },
+                        { date: '2024-05-01', verifications: 2 },
+                        { date: '2024-06-01', verifications: 3 }
+                    ]} />
                 </div>
                 <div className="bg-white shadow rounded-lg p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Geographic Distribution</h3>
-                    <GeographicDistribution />
+                    <GeographicDistribution data={[
+                        { state: 'Lagos', verifications: 45 },
+                        { state: 'Abuja', verifications: 30 },
+                        { state: 'Kano', verifications: 25 }
+                    ]} />
                 </div>
             </div>
         </div>

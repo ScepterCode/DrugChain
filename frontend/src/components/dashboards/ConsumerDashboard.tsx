@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const ConsumerDashboard: React.FC = () => {
-    const [recentVerifications, setRecentVerifications] = useState([
+    const [recentVerifications] = useState([
         {
             id: '1',
             product_name: 'Sample Product',

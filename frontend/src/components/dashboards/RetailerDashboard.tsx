@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAppSelector } from '../../store/hooks';
 
 const RetailerDashboard: React.FC = () => {
-    const { user } = useAppSelector((state) => state.auth);
-    const [stats, setStats] = useState({
+    const [stats] = useState({
         products_verified: 0,
         suspicious_products: 0,
         customer_verifications: 0,

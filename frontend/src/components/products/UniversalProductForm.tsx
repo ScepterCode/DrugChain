@@ -324,7 +324,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Processor</label>
               <input
                 type="text"
-                value={industryData.processor || ''}
+                value={(industryData as any).processor || ''}
                 onChange={(e) => handleIndustryDataChange('processor', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., Intel Core i7"
@@ -334,7 +334,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Memory (GB)</label>
               <input
                 type="number"
-                value={industryData.memory_gb || ''}
+                value={(industryData as any).memory_gb || ''}
                 onChange={(e) => handleIndustryDataChange('memory_gb', parseInt(e.target.value) || '')}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., 16"
@@ -344,7 +344,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Storage (GB)</label>
               <input
                 type="number"
-                value={industryData.storage_gb || ''}
+                value={(industryData as any).storage_gb || ''}
                 onChange={(e) => handleIndustryDataChange('storage_gb', parseInt(e.target.value) || '')}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., 512"
@@ -354,7 +354,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Operating System</label>
               <input
                 type="text"
-                value={industryData.operating_system || ''}
+                value={(industryData as any).operating_system || ''}
                 onChange={(e) => handleIndustryDataChange('operating_system', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., Windows 11"
@@ -370,7 +370,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Material</label>
               <input
                 type="text"
-                value={industryData.material || ''}
+                value={(industryData as any).material || ''}
                 onChange={(e) => handleIndustryDataChange('material', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., Genuine Leather"
@@ -380,7 +380,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Designer</label>
               <input
                 type="text"
-                value={industryData.designer || ''}
+                value={(industryData as any).designer || ''}
                 onChange={(e) => handleIndustryDataChange('designer', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="Designer name"
@@ -390,7 +390,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Collection</label>
               <input
                 type="text"
-                value={industryData.collection_name || ''}
+                value={(industryData as any).collection_name || ''}
                 onChange={(e) => handleIndustryDataChange('collection_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="Collection name"
@@ -399,7 +399,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
             <div className="flex items-center">
               <input
                 type="checkbox"
-                checked={industryData.limited_edition || false}
+                checked={(industryData as any).limited_edition || false}
                 onChange={(e) => handleIndustryDataChange('limited_edition', e.target.checked)}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
