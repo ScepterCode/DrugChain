@@ -21,10 +21,27 @@ const RegisterPage: React.FC = () => {
     const { loading, error } = useAppSelector((state) => state.auth);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({
+        const { name, value } = e.target;
+        
+        // Update form data
+        const updatedFormData = {
             ...formData,
-            [e.target.name]: e.target.value,
-        });
+            [name]: value,
+        };
+        
+        // Sync organization_type with role when role changes
+        if (name === 'role') {
+            updatedFormData.organization_type = value;
+        }
+        
+        setFormData(updatedFormData);
+    };
+
+    const validatePassword = (password: string) => {
+        const minLength = password.length >= 8;
+        const hasNumber = /\d/.test(password);
+        const hasUppercase = /[A-Z]/.test(password);
+        return minLength && hasNumber && hasUppercase;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +50,17 @@ const RegisterPage: React.FC = () => {
 
         if (formData.password !== formData.confirmPassword) {
             alert('Passwords do not match');
+            return;
+        }
+
+        if (!validatePassword(formData.password)) {
+            alert('Password must be at least 8 characters with one uppercase letter and one number');
+            return;
+        }
+
+        // Validate organization name for non-regulator roles
+        if (formData.role !== 'REGULATOR' && !formData.organization_name.trim()) {
+            alert('Organization name is required for this role');
             return;
         }
 
@@ -107,6 +135,9 @@ const RegisterPage: React.FC = () => {
                                 onChange={handleChange}
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
                             />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Must be at least 8 characters with one uppercase letter and one number
+                            </p>
                         </div>
 
                         <div>
@@ -136,16 +167,21 @@ const RegisterPage: React.FC = () => {
                             </select>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Organization Name</label>
-                            <input
-                                type="text"
-                                name="organization_name"
-                                value={formData.organization_name}
-                                onChange={handleChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-                            />
-                        </div>
+                        {formData.role !== 'REGULATOR' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Organization Name {formData.role !== 'REGULATOR' && <span className="text-red-500">*</span>}
+                                </label>
+                                <input
+                                    type="text"
+                                    name="organization_name"
+                                    required={formData.role !== 'REGULATOR'}
+                                    value={formData.organization_name}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                                />
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Registration Number</label>

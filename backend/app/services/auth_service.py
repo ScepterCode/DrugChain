@@ -28,7 +28,13 @@ class AuthService:
             organization = None
             if user_data.organization_name and user_data.organization_type:
                 # Map role to organization type
-                org_type = OrganizationType[user_data.organization_type]
+                try:
+                    org_type = OrganizationType[user_data.organization_type]
+                except KeyError:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid organization type: {user_data.organization_type}"
+                    )
                 
                 organization = Organization(
                     organization_name=user_data.organization_name,
@@ -52,6 +58,20 @@ class AuthService:
                         gmp_certified=False
                     )
                     db.add(manufacturer)
+            elif user_data.role != 'REGULATOR' and not user_data.organization_name:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Organization name is required for this role"
+                )
+            
+            # Validate role
+            try:
+                user_role = UserRole[user_data.role]
+            except KeyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid role: {user_data.role}"
+                )
             
             # Create user
             new_user = User(
@@ -59,7 +79,7 @@ class AuthService:
                 password_hash=get_password_hash(user_data.password),
                 full_name=user_data.full_name,
                 phone_number=user_data.phone_number,
-                role=UserRole[user_data.role],
+                role=user_role,
                 organization_id=organization.organization_id if organization else None,
                 is_verified=False  # Will require email verification
             )

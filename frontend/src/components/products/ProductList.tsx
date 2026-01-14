@@ -18,7 +18,16 @@ const ProductList: React.FC = () => {
             setError(null);
         } catch (err: any) {
             console.error('Failed to fetch products:', err);
-            setError('Failed to load products. Please try again later.');
+            
+            if (err.response?.status === 401) {
+                setError('Authentication required. Please log in to view products.');
+            } else if (err.response?.status === 403) {
+                setError('You do not have permission to view products.');
+            } else if (err.response?.status === 500) {
+                setError('Server error. Please try again later or contact support.');
+            } else {
+                setError('Failed to load products. Please check your connection and try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -33,6 +42,12 @@ const ProductList: React.FC = () => {
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
                 <strong className="font-bold">Error: </strong>
                 <span className="block sm:inline">{error}</span>
+                <button 
+                    onClick={fetchProducts}
+                    className="mt-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                >
+                    Retry
+                </button>
             </div>
         );
     }

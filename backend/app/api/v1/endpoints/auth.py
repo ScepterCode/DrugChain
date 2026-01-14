@@ -23,17 +23,25 @@ async def register(
     For manufacturers, an organization and manufacturer record will be created.
     Returns user details and authentication tokens.
     """
-    result = await AuthService.register_user(db, user_data)
-    return {
-        "success": True,
-        "message": "User registered successfully",
-        "data": {
-            "user": result["user"],
-            "access_token": result["access_token"],
-            "refresh_token": result["refresh_token"],
-            "token_type": result["token_type"]
+    try:
+        result = await AuthService.register_user(db, user_data)
+        return {
+            "success": True,
+            "message": "User registered successfully",
+            "data": {
+                "user": result["user"],
+                "access_token": result["access_token"],
+                "refresh_token": result["refresh_token"],
+                "token_type": result["token_type"]
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 
 @router.post("/login", response_model=Token)

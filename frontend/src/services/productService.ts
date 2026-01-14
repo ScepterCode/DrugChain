@@ -29,10 +29,24 @@ export interface ProductCreateData {
 }
 
 export const productService = {
-    // Get all products (optionally filter by manufacturer via backend logic)
+    // Get all products (tries authenticated endpoint first, falls back to public)
     getProducts: async () => {
-        const response = await api.get<Product[]>('/products');
-        return response.data;
+        try {
+            // Try authenticated endpoint first
+            const response = await api.get<Product[]>('/products');
+            return response.data;
+        } catch (error: any) {
+            // If authentication fails, try public endpoint
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                try {
+                    const response = await api.get<Product[]>('/products/public');
+                    return response.data;
+                } catch (publicError) {
+                    throw error; // Throw original error if public also fails
+                }
+            }
+            throw error;
+        }
     },
 
     // Get single product

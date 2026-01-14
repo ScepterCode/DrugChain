@@ -68,20 +68,39 @@ async def get_product(
     return ProductResponse.from_orm(product)
 
 
+@router.get("/public", response_model=List[ProductResponse])
+async def list_public_products(
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """
+    List all active products publicly (for verification purposes).
+    No authentication required.
+    """
+    products = db.query(Product).filter(
+        Product.is_active == True
+    ).offset(skip).limit(limit).all()
+    
+    return [ProductResponse.from_orm(p) for p in products]
+
+
 @router.get("/", response_model=List[ProductResponse])
 async def list_products(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["MANUFACTURER", "REGULATOR"]))
+    current_user: User = Depends(require_role(["MANUFACTURER", "DISTRIBUTOR", "PHARMACY", "REGULATOR"]))
 ):
     """
     List all products.
-    Manufacturers see only their products, regulators see all.
+    - Manufacturers see only their products
+    - Regulators see all products
+    - Distributors and Pharmacies see all products (for ordering/selling)
     """
     query = db.query(Product)
     
-    # Filter by manufacturer if not regulator
+    # Filter by manufacturer if user is a manufacturer
     if current_user.role.value == "MANUFACTURER":
         query = query.filter(Product.manufacturer_id == current_user.organization_id)
     

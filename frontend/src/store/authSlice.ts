@@ -44,7 +44,12 @@ export const register = createAsyncThunk(
             const user = await authService.getCurrentUser();
             return user;
         } catch (error: any) {
-            return rejectWithValue(error.response?.data?.detail || 'Registration failed');
+            console.error('Registration error:', error);
+            const errorMessage = error.response?.data?.detail || 
+                                error.response?.data?.message || 
+                                error.message || 
+                                'Registration failed';
+            return rejectWithValue(errorMessage);
         }
     }
 );
@@ -105,7 +110,10 @@ const authSlice = createSlice({
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload as string;
+                // Ensure error is always a string
+                state.error = typeof action.payload === 'string' 
+                    ? action.payload 
+                    : 'Registration failed';
             })
             // Fetch current user
             .addCase(fetchCurrentUser.fulfilled, (state, action) => {
