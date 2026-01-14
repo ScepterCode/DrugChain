@@ -1,6 +1,6 @@
 {
-  "name": "drugchain-frontend",
-  "version": "1.0.0",
+  "name": "packguard-frontend",
+  "version": "2.0.0",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

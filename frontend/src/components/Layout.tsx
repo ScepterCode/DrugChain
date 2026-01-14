@@ -17,23 +17,77 @@ const Layout: React.FC = () => {
         navigate('/login');
     };
 
-    const navigation = [
-        { name: 'Dashboard', href: '/portal/dashboard', current: location.pathname === '/portal/dashboard' },
-        { name: 'Products', href: '/portal/products', current: location.pathname.startsWith('/portal/products') },
-        { name: 'Batches', href: '/portal/batches', current: location.pathname.startsWith('/portal/batches') },
-        { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
-    ];
+    const getNavigationForRole = (userRole: string) => {
+        const baseNavigation = [
+            { name: 'Dashboard', href: '/portal/dashboard', current: location.pathname === '/portal/dashboard' }
+        ];
 
-    // Add role-specific navigation
-    if (user?.role === 'REGULATOR') {
-        navigation.push({ name: 'Regulator Dashboard', href: '/portal/regulator', current: location.pathname === '/portal/regulator' });
-    }
-    if (user?.role === 'DISTRIBUTOR' || user?.role === 'PHARMACY') {
-        navigation.push({ name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' });
-    }
-    if (user?.role === 'ADMIN') {
-        navigation.push({ name: 'User Management', href: '/portal/users', current: location.pathname === '/portal/users' });
-    }
+        switch (userRole) {
+            case 'MANUFACTURER':
+            case 'ELECTRONICS_MANUFACTURER':
+            case 'LUXURY_BRAND':
+            case 'FOOD_PRODUCER':
+            case 'AUTOMOTIVE_OEM':
+            case 'COSMETICS_MANUFACTURER':
+                return [
+                    ...baseNavigation,
+                    { name: 'Products', href: '/portal/products', current: location.pathname.startsWith('/portal/products') },
+                    { name: 'Batches', href: '/portal/batches', current: location.pathname.startsWith('/portal/batches') },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
+                ];
+            
+            case 'DISTRIBUTOR':
+                return [
+                    ...baseNavigation,
+                    { name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
+                ];
+            
+            case 'PHARMACY':
+                return [
+                    ...baseNavigation,
+                    { name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
+                ];
+            
+            case 'REGULATOR':
+                return [
+                    ...baseNavigation,
+                    { name: 'Regulator Dashboard', href: '/portal/regulator', current: location.pathname === '/portal/regulator' },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
+                    { name: 'Search & Investigation', href: '/portal/search', current: location.pathname === '/portal/search' }
+                ];
+            
+            case 'ADMIN':
+            case 'SYSTEM_ADMIN':
+                return [
+                    ...baseNavigation,
+                    { name: 'Products', href: '/portal/products', current: location.pathname.startsWith('/portal/products') },
+                    { name: 'Batches', href: '/portal/batches', current: location.pathname.startsWith('/portal/batches') },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
+                    { name: 'User Management', href: '/portal/users', current: location.pathname === '/portal/users' }
+                ];
+            
+            case 'RETAILER':
+            case 'MARKETPLACE':
+                return [
+                    ...baseNavigation,
+                    { name: 'Verification', href: '/portal/verify', current: location.pathname === '/portal/verify' },
+                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
+                ];
+            
+            case 'CONSUMER':
+                return [
+                    ...baseNavigation,
+                    { name: 'Verification', href: '/portal/verify', current: location.pathname === '/portal/verify' }
+                ];
+            
+            default:
+                return baseNavigation;
+        }
+    };
+
+    const navigation = getNavigationForRole(user?.role || 'CONSUMER');
 
     return (
         <div className="min-h-screen bg-gray-50">

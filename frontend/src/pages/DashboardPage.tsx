@@ -1,53 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useAppSelector } from '../store/hooks';
-import { Link } from 'react-router-dom';
-import { analyticsService } from '../services/analyticsService';
-import RegulatorDashboard from './RegulatorDashboard';
-import DistributorDashboard from './DistributorDashboard';
-import VerificationChart from '../components/analytics/VerificationChart';
-import GeographicDistribution from '../components/analytics/GeographicDistribution';
-import Toast from '../components/Toast';
-import { useToast } from '../hooks/useToast';
+import React from 'react';
+import RoleBasedDashboard from '../components/RoleBasedDashboard';
 
 const DashboardPage: React.FC = () => {
-    const { user } = useAppSelector((state) => state.auth);
-    const [stats, setStats] = useState<{
-        total_products: number;
-        total_batches: number;
-        total_verifications: number;
-        verification_rate: number;
-    }>({
-        total_products: 0,
-        total_batches: 0,
-        total_verifications: 0,
-        verification_rate: 0
-    });
-    const [loading, setLoading] = useState(true);
-    const [verificationTrends, setVerificationTrends] = useState<{ date: string; verifications: number }[]>([]);
-    const [geographicData, setGeographicData] = useState<{ state: string; verifications: number }[]>([]);
-    const [productPerformance, setProductPerformance] = useState<any[]>([]);
-    const { toasts, removeToast, showSuccess, showError } = useToast();
+    return <RoleBasedDashboard />;
+};
 
-    // Route to specialized dashboards
-    if (user?.role === 'REGULATOR' || user?.role === 'SYSTEM_ADMIN') {
-        return <RegulatorDashboard />;
-    }
-    
-    if (user?.role === 'DISTRIBUTOR' || user?.role === 'PHARMACY') {
-        return <DistributorDashboard />;
-    }
-
-    useEffect(() => {
-        const loadStats = async () => {
-            try {
-                setLoading(true);
-                console.log('Loading dashboard stats for user:', user?.role);
-                
-                if (user?.role === 'MANUFACTURER') {
-                    console.log('Fetching manufacturer analytics...');
-                    
-                    // Load data with individual error handling
-                    let dashboardData = { 
+export default DashboardPage; 
                         total_products: 0, 
                         total_batches: 0, 
                         total_verifications: 0, 
