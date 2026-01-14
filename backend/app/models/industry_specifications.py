@@ -8,6 +8,9 @@ from app.db.session import Base
 
 class ElectronicsSpecification(Base):
     __tablename__ = "electronics_specifications"
+    
+    # Suppress Pydantic warning about model_number field
+    model_config = {"protected_namespaces": ()}
 
     spec_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
@@ -32,6 +35,9 @@ class ElectronicsSpecification(Base):
 
 class LuxurySpecification(Base):
     __tablename__ = "luxury_specifications"
+    
+    # Suppress Pydantic warning about model_number field
+    model_config = {"protected_namespaces": ()}
 
     spec_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
@@ -56,6 +62,9 @@ class LuxurySpecification(Base):
 
 class FoodSpecification(Base):
     __tablename__ = "food_specifications"
+    
+    # Suppress Pydantic warning about model_number field
+    model_config = {"protected_namespaces": ()}
 
     spec_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
@@ -80,6 +89,9 @@ class FoodSpecification(Base):
 
 class AutomotiveSpecification(Base):
     __tablename__ = "automotive_specifications"
+    
+    # Suppress Pydantic warning about model_number field
+    model_config = {"protected_namespaces": ()}
 
     spec_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
@@ -102,6 +114,9 @@ class AutomotiveSpecification(Base):
 
 class CosmeticsSpecification(Base):
     __tablename__ = "cosmetics_specifications"
+    
+    # Suppress Pydantic warning about model_number field
+    model_config = {"protected_namespaces": ()}
 
     spec_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
