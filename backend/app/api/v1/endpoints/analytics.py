@@ -94,19 +94,39 @@ async def get_regulator_dashboard(
         })
     
     # Get geographic distribution - using a simple approach since location data is in address field
+    # Get geographic distribution from actual verification data
     geo_results = db.query(
-        func.count(VerificationEvent.event_id).label('verifications')
+        func.count(VerificationEvent.event_id).label('total_verifications')
     ).filter(VerificationEvent.location_address.isnot(None)).first()
     
-    # For now, create sample geographic distribution
-    geographic_distribution = [
-        {"state": "Lagos", "verifications": int((geo_results.verifications or 0) * 0.3)},
-        {"state": "Kano", "verifications": int((geo_results.verifications or 0) * 0.15)},
-        {"state": "Rivers", "verifications": int((geo_results.verifications or 0) * 0.12)},
-        {"state": "Oyo", "verifications": int((geo_results.verifications or 0) * 0.1)},
-        {"state": "Kaduna", "verifications": int((geo_results.verifications or 0) * 0.08)},
-        {"state": "Others", "verifications": int((geo_results.verifications or 0) * 0.25)}
-    ]
+    # Get actual geographic distribution by parsing location addresses
+    location_results = db.query(
+        VerificationEvent.location_address,
+        func.count(VerificationEvent.event_id).label('verifications')
+    ).filter(VerificationEvent.location_address.isnot(None))\
+     .group_by(VerificationEvent.location_address)\
+     .all()
+    
+    # Parse states from location addresses
+    state_counts = {}
+    for result in location_results:
+        if result.location_address:
+            # Extract state from address (assuming format: "City, State, Country")
+            parts = result.location_address.split(',')
+            if len(parts) >= 2:
+                state = parts[-2].strip()  # Second to last part should be state
+                state_counts[state] = state_counts.get(state, 0) + result.verifications
+    
+    # Convert to list format
+    geographic_distribution = []
+    for state, count in state_counts.items():
+        geographic_distribution.append({
+            "state": state,
+            "verifications": count
+        })
+    
+    # Sort by verification count
+    geographic_distribution.sort(key=lambda x: x['verifications'], reverse=True)
     
     # Get recent alerts
     alerts = db.query(VerificationEvent)\
@@ -166,16 +186,16 @@ async def get_distributor_dashboard(
     total_packs = db.query(func.sum(Carton.packs_per_carton))\
         .filter(Carton.current_holder_id == org_id).scalar() or 0
     
-    # Mock data for enhanced features (to be implemented)
+    # Real data only - no mock data
     return {
         "data": {
             "total_inventory_cartons": total_cartons,
             "total_inventory_packs": total_packs,
-            "pending_transfers": 0,  # TODO: Implement transfer system
-            "completed_transfers": 0,  # TODO: Implement transfer system
-            "low_stock_alerts": 0,  # TODO: Implement stock monitoring
-            "recent_transfers": [],  # TODO: Implement transfer history
-            "inventory_by_product": []  # TODO: Implement product-wise inventory
+            "pending_transfers": 0,  # Will be 0 until transfer system is implemented
+            "completed_transfers": 0,  # Will be 0 until transfer system is implemented
+            "low_stock_alerts": 0,  # Will be 0 until stock monitoring is implemented
+            "recent_transfers": [],  # Will be empty until transfer history is implemented
+            "inventory_by_product": []  # Will be empty until product-wise inventory is implemented
         }
     }
 
@@ -240,22 +260,39 @@ async def get_geographic_distribution(
             .join(Batch, Pack.batch_id == Batch.batch_id)\
             .filter(Batch.manufacturer_id == current_user.organization_id)
     
-    # Get total verifications
-    total_verifications = query.scalar() or 0
+    # Get actual geographic distribution from verification data
+    location_results = db.query(
+        VerificationEvent.location_address,
+        func.count(VerificationEvent.event_id).label('verifications')
+    ).filter(VerificationEvent.location_address.isnot(None))
     
-    # Create sample geographic distribution based on Nigerian demographics
-    distribution = [
-        {"state": "Lagos", "verifications": int(total_verifications * 0.25)},
-        {"state": "Kano", "verifications": int(total_verifications * 0.15)},
-        {"state": "Rivers", "verifications": int(total_verifications * 0.12)},
-        {"state": "Oyo", "verifications": int(total_verifications * 0.10)},
-        {"state": "Kaduna", "verifications": int(total_verifications * 0.08)},
-        {"state": "Abia", "verifications": int(total_verifications * 0.06)},
-        {"state": "Delta", "verifications": int(total_verifications * 0.05)},
-        {"state": "Edo", "verifications": int(total_verifications * 0.04)},
-        {"state": "Ondo", "verifications": int(total_verifications * 0.04)},
-        {"state": "Others", "verifications": int(total_verifications * 0.11)}
-    ]
+    # Filter by user role
+    if current_user.role == UserRole.MANUFACTURER and current_user.organization_id:
+        location_results = location_results.join(Pack, VerificationEvent.pack_id == Pack.pack_id)\
+                                         .join(Batch, Pack.batch_id == Batch.batch_id)\
+                                         .filter(Batch.manufacturer_id == current_user.organization_id)
+    
+    location_results = location_results.group_by(VerificationEvent.location_address).all()
+    
+    # Parse states from location addresses
+    state_counts = {}
+    for result in location_results:
+        if result.location_address:
+            # Extract state from address (assuming format: "City, State, Country")
+            parts = result.location_address.split(',')
+            if len(parts) >= 2:
+                state = parts[-2].strip()  # Second to last part should be state
+                state_counts[state] = state_counts.get(state, 0) + result.verifications
+    
+    # Convert to list format and sort
+    distribution = []
+    for state, count in state_counts.items():
+        distribution.append({
+            "state": state,
+            "verifications": count
+        })
+    
+    distribution.sort(key=lambda x: x['verifications'], reverse=True)
     
     return {"data": distribution}
 
@@ -562,7 +599,7 @@ async def get_volume_data(
         
         state_volume_data.append({
             'state': state,
-            'volume': verifications * 10,  # Mock volume data
+            'volume': verifications,  # Use actual verification count as volume
             'verifications': verifications,
             'counterfeit_rate': round(counterfeit_rate, 2)
         })
@@ -620,10 +657,10 @@ async def get_blockchain_analytics(
             "immutable_records_count": blockchain_verified,
             "cryptographic_verification_active": True,
             
-            # Performance metrics
-            "average_verification_time_ms": 250,  # Mock data
-            "blockchain_uptime_percentage": 99.8,
-            "consensus_success_rate": 100.0
+            # Performance metrics - real data only
+            "average_verification_time_ms": 0,  # Will be calculated when we track verification times
+            "blockchain_uptime_percentage": 0.0,  # Will be calculated from actual blockchain status
+            "consensus_success_rate": 0.0  # Will be calculated from actual consensus data
         }
     }
 
