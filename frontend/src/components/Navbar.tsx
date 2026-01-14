@@ -39,6 +39,28 @@ const Navbar: React.FC = () => {
                     </div>
 
                     <div className="flex items-center space-x-4">
+                        {!isAuthenticated && (
+                            <>
+                                <Link
+                                    to="/about"
+                                    className="text-gray-700 hover:text-primary-600 px-3 py-2"
+                                >
+                                    About
+                                </Link>
+                                <Link
+                                    to="/how-to-use"
+                                    className="text-gray-700 hover:text-primary-600 px-3 py-2"
+                                >
+                                    How to Use
+                                </Link>
+                                <Link
+                                    to="/verify"
+                                    className="text-gray-700 hover:text-primary-600 px-3 py-2"
+                                >
+                                    Verify Drug
+                                </Link>
+                            </>
+                        )}
                         {isAuthenticated ? (
                             <>
                                 <span className="text-gray-700">

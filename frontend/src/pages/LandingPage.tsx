@@ -112,11 +112,23 @@ const LandingPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <h1 className="text-2xl font-bold text-gray-900">DrugChain</h1>
-                            </div>
+                            <Link to="/" className="flex-shrink-0">
+                                <h1 className="text-2xl font-bold text-primary-600">DrugChain</h1>
+                            </Link>
                         </div>
                         <div className="flex items-center space-x-4">
+                            <Link
+                                to="/about"
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                            >
+                                About
+                            </Link>
+                            <Link
+                                to="/how-to-use"
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                            >
+                                How to Use
+                            </Link>
                             <Link
                                 to="/verify"
                                 className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"

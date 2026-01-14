@@ -16,6 +16,8 @@ import ProductListPage from './pages/products/ProductListPage';
 import NewProductPage from './pages/products/NewProductPage';
 import UserManagementPage from './pages/UserManagementPage';
 import VerificationPage from './pages/VerificationPage';
+import AboutPage from './pages/AboutPage';
+import HowToUsePage from './pages/HowToUsePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/verify" element={<VerificationPage />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/how-to-use" element={<HowToUsePage />} />
                         
                         {/* Protected routes */}
                         <Route path="/portal" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
