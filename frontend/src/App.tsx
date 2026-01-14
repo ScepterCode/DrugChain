@@ -7,8 +7,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import RegulatorDashboard from './pages/RegulatorDashboard';
-import DistributorDashboard from './pages/DistributorDashboard';
 import BatchListPage from './pages/batches/BatchListPage';
 import BatchDetailsPage from './pages/batches/BatchDetailsPage';
 import NewBatchPage from './pages/batches/NewBatchPage';
@@ -44,8 +42,6 @@ function App() {
                             <Route path="batches/new" element={<NewBatchPage />} />
                             <Route path="batches/:batchId" element={<BatchDetailsPage />} />
                             <Route path="analytics" element={<AnalyticsPage />} />
-                            <Route path="regulator" element={<RegulatorDashboard />} />
-                            <Route path="distributor" element={<DistributorDashboard />} />
                             <Route path="users" element={<UserManagementPage />} />
                         </Route>
                         
