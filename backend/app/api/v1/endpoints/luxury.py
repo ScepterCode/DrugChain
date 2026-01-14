@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.models import Product, User, LuxurySpecification, Pack
 from app.schemas.product_category import EnhancedProductCreate, EnhancedProductResponse
 from app.api.dependencies import get_current_user, require_role
-from app.services.verification_service import verify_pack_authenticity
+from app.services.verification_service import VerificationService
 
 router = APIRouter()
 

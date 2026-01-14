@@ -270,3 +270,54 @@ class VerificationService:
         return VerificationService.verify_carton_with_authorization(
             db, carton_id, ip_address, location, phone_number
         )
+
+    @staticmethod
+    def verify_pack_authenticity(pack_id: str, db: Session, **kwargs) -> dict:
+        """
+        Verify the authenticity of a product pack for luxury goods and other industries.
+        
+        Args:
+            pack_id: The pack identifier to verify
+            db: Database session
+            **kwargs: Additional parameters (ip_address, location, phone_number, etc.)
+        
+        Returns:
+            dict: Verification result with status and details
+        """
+        try:
+            # Extract optional parameters
+            ip_address = kwargs.get('ip_address')
+            location = kwargs.get('location')
+            phone_number = kwargs.get('phone_number')
+            
+            # Use the existing verify_pack method
+            result = VerificationService.verify_pack(
+                db=db,
+                pack_id=pack_id,
+                ip_address=ip_address,
+                location=location,
+                phone_number=phone_number
+            )
+            
+            # Transform result to match expected format for luxury goods
+            return {
+                "verified": result.get("success", False),
+                "pack_id": pack_id,
+                "verification_result": result.get("verification_result", "UNKNOWN"),
+                "message": result.get("message", "Verification completed"),
+                "details": result.get("data", {}),
+                "blockchain_verified": result.get("blockchain_verified", False),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Pack authenticity verification failed for {pack_id}: {e}")
+            return {
+                "verified": False,
+                "pack_id": pack_id,
+                "verification_result": "ERROR",
+                "message": f"Verification failed: {str(e)}",
+                "details": {},
+                "blockchain_verified": False,
+                "timestamp": datetime.utcnow().isoformat()
+            }
