@@ -2,6 +2,7 @@
 from app.models.user import User, UserRole
 from app.models.organization import Organization, Manufacturer, OrganizationType, LicenseStatus
 from app.models.product import Product
+from app.models.product_category import ProductCategory, ProductAttribute, Certification
 from app.models.batch import Batch, Carton, Pack, BatchStatus, PackStatus
 
 __all__ = [
@@ -12,6 +13,9 @@ __all__ = [
     "OrganizationType",
     "LicenseStatus",
     "Product",
+    "ProductCategory",
+    "ProductAttribute",
+    "Certification",
     "Batch",
     "Carton",
     "Pack",

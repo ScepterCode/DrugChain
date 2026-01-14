@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0">
-                                <h1 className="text-2xl font-bold text-primary-600">DrugChain</h1>
+                                <h1 className="text-2xl font-bold text-primary-600">PackGuard</h1>
                             </Link>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -246,7 +246,7 @@ const LandingPage: React.FC = () => {
                 <div className="mt-20">
                     <div className="text-center">
                         <h2 className="text-3xl font-extrabold text-gray-900">
-                            How DrugChain Protects You
+                            How PackGuard Protects You
                         </h2>
                         <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
                             Our advanced blockchain technology ensures every medication is authentic and traceable
@@ -320,7 +320,7 @@ const LandingPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <p className="text-base text-gray-500">
-                            © 2026 DrugChain. Protecting Nigeria from counterfeit medications.
+                            © 2026 PackGuard. Protecting consumers from counterfeit products worldwide.
                         </p>
                         <p className="mt-2 text-sm text-gray-400">
                             Report suspicious products to NAFDAC: +234-1-448-0772 | pharmacovigilance@nafdac.gov.ng

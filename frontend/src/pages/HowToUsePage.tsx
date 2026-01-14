@@ -21,7 +21,7 @@ const HowToUsePage: React.FC = () => {
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0">
-                                <h1 className="text-2xl font-bold text-primary-600">DrugChain</h1>
+                                <h1 className="text-2xl font-bold text-primary-600">PackGuard</h1>
                             </Link>
                         </div>
                         
@@ -122,7 +122,7 @@ const HowToUsePage: React.FC = () => {
                 <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-                            How to Use DrugChain
+                            How to Use PackGuard
                         </h1>
                         <p className="mt-3 max-w-md mx-auto text-base text-primary-200 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
                             Step-by-step guide for all stakeholders in the pharmaceutical supply chain
@@ -161,7 +161,7 @@ const HowToUsePage: React.FC = () => {
                         <div>
                             <h2 className="text-3xl font-bold text-gray-900 mb-6">For Manufacturers</h2>
                             <p className="text-lg text-gray-600 mb-8">
-                                As a manufacturer, you're the starting point of the supply chain. Here's how to use DrugChain to secure your products:
+                                As a manufacturer, you're the starting point of the supply chain. Here's how to use PackGuard to secure your products:
                             </p>
 
                             <div className="space-y-8">
@@ -368,7 +368,7 @@ const HowToUsePage: React.FC = () => {
                                     <div>
                                         <h3 className="text-xl font-semibold text-gray-900 mb-2">Look for QR Codes</h3>
                                         <p className="text-gray-600 mb-4">
-                                            Check that your medication package has a DrugChain QR code. Authentic products will always have one.
+                                            Check that your product package has a PackGuard QR code. Authentic products will always have one.
                                         </p>
                                         <div className="bg-green-50 p-4 rounded-lg">
                                             <p className="text-sm text-green-700">
@@ -530,7 +530,7 @@ const HowToUsePage: React.FC = () => {
                         Ready to Get Started?
                     </h2>
                     <p className="text-xl text-gray-600 mb-8">
-                        Join thousands of organizations already using DrugChain to secure their supply chains.
+                        Join thousands of organizations already using PackGuard to secure their supply chains.
                     </p>
                     <div className="space-x-4">
                         <Link

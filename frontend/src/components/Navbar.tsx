@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center">
-                            <span className="text-2xl font-bold text-primary-600">DrugChain</span>
+                            <span className="text-2xl font-bold text-primary-600">PackGuard</span>
                         </Link>
                         {isAuthenticated && (
                             <div className="ml-10 flex items-center space-x-4">

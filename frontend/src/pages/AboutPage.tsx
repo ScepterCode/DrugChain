@@ -12,7 +12,7 @@ const AboutPage: React.FC = () => {
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0">
-                                <h1 className="text-2xl font-bold text-primary-600">DrugChain</h1>
+                                <h1 className="text-2xl font-bold text-primary-600">PackGuard</h1>
                             </Link>
                         </div>
                         
@@ -113,10 +113,10 @@ const AboutPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-                            About DrugChain
+                            About PackGuard
                         </h1>
                         <p className="mt-3 max-w-md mx-auto text-base text-primary-200 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-                            Revolutionizing pharmaceutical supply chain security through blockchain technology
+                            Revolutionizing product authentication and supply chain security across all industries through blockchain technology
                         </p>
                     </div>
                 </div>
@@ -131,8 +131,9 @@ const AboutPage: React.FC = () => {
                         Protecting Lives Through Technology
                     </p>
                     <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-                        DrugChain is dedicated to eliminating counterfeit drugs from the pharmaceutical supply chain 
+                        PackGuard is dedicated to eliminating counterfeit products across all industries 
                         by providing a transparent, secure, and immutable verification system powered by blockchain technology.
+                        From pharmaceuticals to electronics, luxury goods to automotive parts, we protect consumers and brands worldwide.
                     </p>
                 </div>
 
@@ -150,9 +151,9 @@ const AboutPage: React.FC = () => {
                             <h3 className="ml-4 text-lg font-medium text-gray-900">The Problem</h3>
                         </div>
                         <p className="text-gray-600">
-                            Counterfeit drugs pose a serious threat to public health, with the WHO estimating that 
-                            1 in 10 medical products in developing countries are substandard or falsified. Traditional 
-                            supply chain tracking methods are vulnerable to manipulation and lack transparency.
+                            Counterfeit products pose a serious threat to consumers and businesses worldwide, with the WHO estimating that 
+                            the global counterfeit market exceeds $4.2 trillion annually. From fake pharmaceuticals causing deaths to 
+                            counterfeit electronics creating fire hazards, traditional supply chain tracking methods are vulnerable to manipulation and lack transparency.
                         </p>
                     </div>
 
@@ -168,10 +169,124 @@ const AboutPage: React.FC = () => {
                             <h3 className="ml-4 text-lg font-medium text-gray-900">Our Solution</h3>
                         </div>
                         <p className="text-gray-600">
-                            DrugChain creates an immutable record of every drug's journey from manufacturer to patient. 
-                            Using blockchain technology and unique QR codes, we enable instant verification of drug 
-                            authenticity while maintaining complete supply chain transparency.
+                            PackGuard creates an immutable record of every product's journey from manufacturer to consumer. 
+                            Using blockchain technology and unique QR codes, we enable instant verification of product 
+                            authenticity across all industries while maintaining complete supply chain transparency.
                         </p>
+                    </div>
+                </div>
+
+                {/* Industry Coverage */}
+                <div className="mb-16">
+                    <div className="lg:text-center mb-12">
+                        <h2 className="text-base text-primary-600 font-semibold tracking-wide uppercase">Industries We Serve</h2>
+                        <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                            Universal Protection Across All Sectors
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Electronics</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Smartphones, laptops, components, and accessories with compatibility verification and warranty tracking.
+                            </p>
+                            <div className="text-sm text-blue-600 font-medium">
+                                Market Impact: $169B in counterfeit electronics annually
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Luxury Goods</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Handbags, watches, jewelry with authenticity certificates and provenance tracking.
+                            </p>
+                            <div className="text-sm text-purple-600 font-medium">
+                                Market Impact: $98B in fake luxury items annually
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 5M7 13l-1.5-5m0 0L4 3H2m16 16a2 2 0 11-4 0 2 2 0 014 0zm-10 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Food & Beverages</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Premium wines, organic foods, supplements with origin tracking and safety verification.
+                            </p>
+                            <div className="text-sm text-green-600 font-medium">
+                                Market Impact: $40B in food fraud annually
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Automotive Parts</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Engine parts, brake components, airbags with safety-critical verification and compatibility checks.
+                            </p>
+                            <div className="text-sm text-red-600 font-medium">
+                                Market Impact: $45B in counterfeit auto parts annually
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-pink-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Cosmetics</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Skincare, makeup, fragrances with ingredient verification and safety tracking.
+                            </p>
+                            <div className="text-sm text-pink-600 font-medium">
+                                Market Impact: $5.4B in fake beauty products annually
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary-500">
+                            <div className="flex items-center mb-4">
+                                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
+                                    </svg>
+                                </div>
+                                <h3 className="ml-4 text-lg font-medium text-gray-900">Pharmaceuticals</h3>
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                                Our original focus - comprehensive drug verification with regulatory compliance and safety tracking.
+                            </p>
+                            <div className="text-sm text-primary-600 font-medium">
+                                Market Impact: Life-threatening counterfeit medications
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -180,7 +295,7 @@ const AboutPage: React.FC = () => {
                     <div className="lg:text-center mb-12">
                         <h2 className="text-base text-primary-600 font-semibold tracking-wide uppercase">Key Features</h2>
                         <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                            Comprehensive Drug Verification
+                            Universal Product Authentication
                         </p>
                     </div>
 
@@ -203,9 +318,9 @@ const AboutPage: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Multi-Stakeholder Platform</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">Multi-Industry Platform</h3>
                             <p className="text-gray-600">
-                                Connects manufacturers, distributors, pharmacies, and regulators in one ecosystem.
+                                Supports authentication across electronics, luxury goods, food, automotive, cosmetics, and pharmaceuticals.
                             </p>
                         </div>
 
@@ -217,7 +332,7 @@ const AboutPage: React.FC = () => {
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-2">Real-time Tracking</h3>
                             <p className="text-gray-600">
-                                Track drugs throughout the supply chain with real-time updates and notifications.
+                                Track products throughout the supply chain with real-time updates and notifications across all industries.
                             </p>
                         </div>
 
@@ -229,7 +344,7 @@ const AboutPage: React.FC = () => {
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-2">Instant Verification</h3>
                             <p className="text-gray-600">
-                                QR code scanning provides immediate drug authenticity verification for consumers.
+                                QR code scanning provides immediate product authenticity verification for consumers across all industries.
                             </p>
                         </div>
 
@@ -322,7 +437,7 @@ const AboutPage: React.FC = () => {
                         Ready to Secure Your Supply Chain?
                     </h2>
                     <p className="text-xl text-gray-600 mb-8">
-                        Join the fight against counterfeit drugs and protect your customers with DrugChain.
+                        Join the fight against counterfeit products and protect your customers with PackGuard.
                     </p>
                     <div className="space-x-4">
                         <Link

@@ -44,7 +44,7 @@ const Layout: React.FC = () => {
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center">
                                 <Link to="/portal/dashboard" className="text-2xl font-bold text-primary-600">
-                                    DrugChain
+                                    PackGuard
                                 </Link>
                             </div>
                             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

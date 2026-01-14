@@ -9,9 +9,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title=settings.APP_NAME,
+    title="PackGuard API",
     version=settings.APP_VERSION,
-    description="DrugChain - Blockchain-based Drug Verification Platform",
+    description="PackGuard - Universal Product Authentication Platform",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
@@ -44,9 +44,10 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {
-        "message": "DrugChain API",
+        "message": "PackGuard API",
         "version": settings.APP_VERSION,
-        "status": "running"
+        "status": "running",
+        "description": "Universal Product Authentication Platform"
     }
 
 
@@ -54,7 +55,7 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "service": "drugchain-api"
+        "service": "packguard-api"
     }
 
 
