@@ -615,6 +615,69 @@ async def get_volume_data(
     }
 
 
+@router.get("/export")
+async def export_analytics(
+    format: str = "csv",
+    days: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Export analytics data in CSV or Excel format"""
+    from fastapi.responses import StreamingResponse
+    import csv
+    import io
+    from datetime import datetime, timedelta
+    
+    # Calculate date range
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)
+    
+    # Get verification data
+    query = db.query(VerificationEvent).filter(
+        VerificationEvent.created_at >= start_date,
+        VerificationEvent.created_at <= end_date
+    )
+    
+    # Filter by manufacturer if user is manufacturer
+    if current_user.role == UserRole.MANUFACTURER and current_user.organization_id:
+        query = query.join(Pack, VerificationEvent.pack_id == Pack.pack_id)\
+                    .join(Batch, Pack.batch_id == Batch.batch_id)\
+                    .filter(Batch.manufacturer_id == current_user.organization_id)
+    
+    verifications = query.all()
+    
+    # Create CSV data
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write headers
+    writer.writerow([
+        'Date', 'Pack ID', 'Result', 'Location', 'Verified By Phone', 'IP Address'
+    ])
+    
+    # Write data
+    for verification in verifications:
+        writer.writerow([
+            verification.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            verification.pack_id,
+            verification.verification_result,
+            verification.location_address or 'Unknown',
+            verification.verified_by_phone or 'Anonymous',
+            verification.ip_address or 'Unknown'
+        ])
+    
+    output.seek(0)
+    
+    # Return as downloadable file
+    filename = f"analytics-{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}.csv"
+    
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
 @router.get("/blockchain")
 async def get_blockchain_analytics(
     current_user: User = Depends(get_current_user),
