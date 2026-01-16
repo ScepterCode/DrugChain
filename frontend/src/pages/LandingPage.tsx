@@ -151,10 +151,10 @@ const LandingPage: React.FC = () => {
                 <div className="text-center">
                     <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                         <span className="block">Protect Yourself from</span>
-                        <span className="block text-primary-600">Counterfeit Drugs</span>
+                        <span className="block text-primary-600">Counterfeit Products</span>
                     </h1>
                     <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-                        Verify the authenticity of your medications instantly using our blockchain-powered verification system. 
+                        Verify the authenticity of any product instantly using our blockchain-powered verification system. 
                         Each product has a unique code that can only be verified once.
                     </p>
                 </div>
@@ -164,9 +164,9 @@ const LandingPage: React.FC = () => {
                     {!result ? (
                         <div className="bg-white rounded-2xl shadow-xl p-8">
                             <div className="text-center mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Medication</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Product</h2>
                                 <p className="text-gray-600">
-                                    Scan the QR code or enter the Pack ID found on your drug packaging
+                                    Scan the QR code or enter the Pack ID found on your product packaging
                                 </p>
                             </div>
 
@@ -249,7 +249,7 @@ const LandingPage: React.FC = () => {
                             How PackGuard Protects You
                         </h2>
                         <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-                            Our advanced blockchain technology ensures every medication is authentic and traceable
+                            Our advanced blockchain technology ensures every product is authentic and traceable
                         </p>
                     </div>
 
@@ -284,9 +284,9 @@ const LandingPage: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">NAFDAC Approved</h3>
+                            <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">Regulatory Approved</h3>
                             <p className="mt-2 text-base text-gray-500 text-center">
-                                Integrated with NAFDAC systems for official drug authentication and safety reporting
+                                Integrated with regulatory systems for official product authentication and safety reporting
                             </p>
                         </div>
                     </div>
