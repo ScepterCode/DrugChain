@@ -9,6 +9,7 @@
     }
   ],
   "env": {
-    "VITE_APP_VERSION": "2.0.0"
+    "VITE_APP_VERSION": "2.0.0",
+    "VITE_API_URL": "https://drugchain-backend.onrender.com/api/v1"
   }
 }
