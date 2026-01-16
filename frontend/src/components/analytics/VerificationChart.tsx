@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface VerificationChartProps {
     data: {
@@ -8,7 +8,38 @@ interface VerificationChartProps {
 }
 
 const VerificationChart: React.FC<VerificationChartProps> = ({ data }) => {
-    if (!data || data.length === 0) {
+    // PERFORMANCE FIX: Memoize expensive calculations
+    const chartData = useMemo(() => {
+        if (!data || data.length === 0) {
+            return null;
+        }
+
+        const maxValue = Math.max(...data.map(d => d.verifications));
+        const minValue = Math.min(...data.map(d => d.verifications));
+        const range = maxValue - minValue || 1;
+        const total = data.reduce((sum, d) => sum + d.verifications, 0);
+        const average = Math.round(total / data.length);
+
+        const points = data.map((d, i) => {
+            const x = (i / Math.max(data.length - 1, 1)) * 360 + 20;
+            const y = 140 - ((d.verifications - minValue) / range) * 120;
+            return { x, y, date: d.date, verifications: d.verifications };
+        });
+
+        const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+
+        return {
+            maxValue,
+            minValue,
+            range,
+            total,
+            average,
+            points,
+            polylinePoints
+        };
+    }, [data]);
+
+    if (!chartData) {
         return (
             <div className="text-center py-8">
                 <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -18,10 +49,6 @@ const VerificationChart: React.FC<VerificationChartProps> = ({ data }) => {
             </div>
         );
     }
-
-    const maxValue = Math.max(...data.map(d => d.verifications));
-    const minValue = Math.min(...data.map(d => d.verifications));
-    const range = maxValue - minValue || 1;
 
     return (
         <div className="space-y-4">
@@ -50,38 +77,30 @@ const VerificationChart: React.FC<VerificationChartProps> = ({ data }) => {
                             fill="none"
                             stroke="#3b82f6"
                             strokeWidth="2"
-                            points={data.map((d, i) => {
-                                const x = (i / (data.length - 1)) * 360 + 20;
-                                const y = 140 - ((d.verifications - minValue) / range) * 120;
-                                return `${x},${y}`;
-                            }).join(' ')}
+                            points={chartData.polylinePoints}
                         />
                     )}
                     
                     {/* Data points */}
-                    {data.map((d, i) => {
-                        const x = (i / Math.max(data.length - 1, 1)) * 360 + 20;
-                        const y = 140 - ((d.verifications - minValue) / range) * 120;
-                        return (
-                            <circle
-                                key={i}
-                                cx={x}
-                                cy={y}
-                                r="3"
-                                fill="#3b82f6"
-                                className="hover:r-4 transition-all"
-                            >
-                                <title>{`${new Date(d.date).toLocaleDateString()}: ${d.verifications} verifications`}</title>
-                            </circle>
-                        );
-                    })}
+                    {chartData.points.map((point, i) => (
+                        <circle
+                            key={i}
+                            cx={point.x}
+                            cy={point.y}
+                            r="3"
+                            fill="#3b82f6"
+                            className="hover:r-4 transition-all"
+                        >
+                            <title>{`${new Date(point.date).toLocaleDateString()}: ${point.verifications} verifications`}</title>
+                        </circle>
+                    ))}
                 </svg>
                 
                 {/* Y-axis labels */}
                 <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 py-4">
-                    <span>{maxValue}</span>
-                    <span>{Math.round((maxValue + minValue) / 2)}</span>
-                    <span>{minValue}</span>
+                    <span>{chartData.maxValue}</span>
+                    <span>{Math.round((chartData.maxValue + chartData.minValue) / 2)}</span>
+                    <span>{chartData.minValue}</span>
                 </div>
             </div>
 
@@ -98,19 +117,19 @@ const VerificationChart: React.FC<VerificationChartProps> = ({ data }) => {
             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                 <div className="text-center">
                     <div className="text-lg font-semibold text-blue-600">
-                        {data.reduce((sum, d) => sum + d.verifications, 0)}
+                        {chartData.total}
                     </div>
                     <div className="text-xs text-gray-500">Total</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-semibold text-green-600">
-                        {Math.round(data.reduce((sum, d) => sum + d.verifications, 0) / data.length)}
+                        {chartData.average}
                     </div>
                     <div className="text-xs text-gray-500">Daily Avg</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-semibold text-purple-600">
-                        {maxValue}
+                        {chartData.maxValue}
                     </div>
                     <div className="text-xs text-gray-500">Peak</div>
                 </div>

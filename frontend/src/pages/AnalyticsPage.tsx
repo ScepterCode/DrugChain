@@ -58,38 +58,32 @@ const AnalyticsPage: React.FC = () => {
             setLoading(true);
             console.log('Loading analytics data for time range:', timeRange);
             
-            // Load different data based on user role with individual error handling
-            let locations: any[] = [];
-            let volume: any = { volumeData: [], stateVolumeData: [] };
-            let trends: any[] = [];
-            let geographic: any[] = [];
+            // PERFORMANCE FIX: Make all API calls in parallel instead of sequential
+            const [locationsResult, volumeResult, trendsResult, geographicResult] = await Promise.allSettled([
+                analyticsService.getVerificationLocations(parseInt(timeRange)),
+                analyticsService.getVolumeData(parseInt(timeRange)),
+                analyticsService.getVerificationTrends(parseInt(timeRange)),
+                analyticsService.getGeographicDistribution()
+            ]);
 
-            try {
-                locations = await analyticsService.getVerificationLocations(parseInt(timeRange));
-                console.log('Loaded verification locations:', locations.length);
-            } catch (err) {
-                console.warn('Failed to load verification locations:', err);
+            // Extract data from settled promises with error handling
+            const locations = locationsResult.status === 'fulfilled' ? locationsResult.value : [];
+            const volume = volumeResult.status === 'fulfilled' ? volumeResult.value : { volumeData: [], stateVolumeData: [] };
+            const trends = trendsResult.status === 'fulfilled' ? trendsResult.value : [];
+            const geographic = geographicResult.status === 'fulfilled' ? geographicResult.value : [];
+
+            // Log any errors but don't fail the entire load
+            if (locationsResult.status === 'rejected') {
+                console.warn('Failed to load verification locations:', locationsResult.reason);
             }
-
-            try {
-                volume = await analyticsService.getVolumeData(parseInt(timeRange));
-                console.log('Loaded volume data:', volume);
-            } catch (err) {
-                console.warn('Failed to load volume data:', err);
+            if (volumeResult.status === 'rejected') {
+                console.warn('Failed to load volume data:', volumeResult.reason);
             }
-
-            try {
-                trends = await analyticsService.getVerificationTrends(parseInt(timeRange));
-                console.log('Loaded verification trends:', trends.length);
-            } catch (err) {
-                console.warn('Failed to load verification trends:', err);
+            if (trendsResult.status === 'rejected') {
+                console.warn('Failed to load verification trends:', trendsResult.reason);
             }
-
-            try {
-                geographic = await analyticsService.getGeographicDistribution();
-                console.log('Loaded geographic distribution:', geographic.length);
-            } catch (err) {
-                console.warn('Failed to load geographic distribution:', err);
+            if (geographicResult.status === 'rejected') {
+                console.warn('Failed to load geographic distribution:', geographicResult.reason);
             }
 
             setAnalyticsData({
