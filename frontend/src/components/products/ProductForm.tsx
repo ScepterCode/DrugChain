@@ -59,7 +59,7 @@ const ProductForm: React.FC = () => {
 
         try {
             await productService.createProduct(formData);
-            navigate('/products');
+            navigate('/portal/products');
         } catch (err: any) {
             console.error('Failed to create product:', err);
             setError(err.response?.data?.detail || 'Failed to create product. Please try again.');
@@ -233,7 +233,7 @@ const ProductForm: React.FC = () => {
             <div className="flex justify-end">
                 <button
                     type="button"
-                    onClick={() => navigate('/products')}
+                    onClick={() => navigate('/portal/products')}
                     className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
                     Cancel

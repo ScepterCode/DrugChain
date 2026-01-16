@@ -82,6 +82,11 @@ export const analyticsService = {
         return response.data.data;
     },
 
+    getManufacturerBatches: async () => {
+        const response = await api.get<{ data: any[] }>('/analytics/supply-chain/manufacturer-batches');
+        return response.data.data;
+    },
+
     getRegulatorStats: async () => {
         const response = await api.get<{ data: DashboardStats }>('/analytics/regulator/dashboard');
         return response.data.data;

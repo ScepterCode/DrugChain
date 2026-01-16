@@ -4,6 +4,7 @@ import { useAppSelector } from '../../store/hooks';
 import { analyticsService } from '../../services/analyticsService';
 import VerificationChart from '../analytics/VerificationChart';
 import GeographicDistribution from '../analytics/GeographicDistribution';
+import BatchFlowVisualization from '../supply-chain/BatchFlowVisualization';
 
 const ManufacturerDashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
@@ -14,6 +15,8 @@ const ManufacturerDashboard: React.FC = () => {
         verification_rate: 0
     });
     const [loading, setLoading] = useState(true);
+    const [recentBatches, setRecentBatches] = useState<any[]>([]);
+    const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
     useEffect(() => {
         const loadStats = async () => {
@@ -32,7 +35,17 @@ const ManufacturerDashboard: React.FC = () => {
             }
         };
 
+        const loadRecentBatches = async () => {
+            try {
+                const response = await analyticsService.getManufacturerBatches();
+                setRecentBatches(response.slice(0, 5)); // Show only 5 most recent
+            } catch (error) {
+                console.error('Failed to load recent batches:', error);
+            }
+        };
+
         loadStats();
+        loadRecentBatches();
     }, []);
 
     const getIndustryType = (role: string) => {
@@ -247,6 +260,79 @@ const ManufacturerDashboard: React.FC = () => {
                 </div>
             </div>
 
+            {/* Supply Chain Flow Section */}
+            <div className="bg-white shadow rounded-lg mb-8">
+                <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Batch Distribution</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Track how your products move through the supply chain from production to end consumers.
+                    </p>
+                    
+                    {recentBatches.length === 0 ? (
+                        <div className="text-center py-8">
+                            <div className="text-gray-400 text-4xl mb-4">📦</div>
+                            <p className="text-gray-600">No batches created yet</p>
+                            <p className="text-sm text-gray-500">Create your first batch to start tracking distribution</p>
+                            <Link
+                                to="/portal/batches/new"
+                                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-600 bg-primary-100 hover:bg-primary-200"
+                            >
+                                Create First Batch
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {recentBatches.map((batch) => (
+                                <div key={batch.batch_id} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center space-x-4">
+                                                <div>
+                                                    <h4 className="text-sm font-medium text-gray-900">
+                                                        {batch.product_name || 'Unknown Product'}
+                                                    </h4>
+                                                    <p className="text-sm text-gray-500">
+                                                        Batch: {batch.batch_id} • {batch.batch_size?.toLocaleString() || 0} units
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm text-gray-900">
+                                                        {batch.distributed_cartons || 0} / {batch.total_cartons || 0} cartons distributed
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        Created: {batch.created_at ? new Date(batch.created_at).toLocaleDateString() : 'Unknown'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="ml-4">
+                                            <button
+                                                onClick={() => setSelectedBatchId(batch.batch_id)}
+                                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                            >
+                                                <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                                </svg>
+                                                View Flow
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            <div className="text-center pt-4">
+                                <Link
+                                    to="/portal/batches"
+                                    className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                                >
+                                    View All Batches →
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Charts */}
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="bg-white shadow rounded-lg p-6">
@@ -269,6 +355,14 @@ const ManufacturerDashboard: React.FC = () => {
                     ]} />
                 </div>
             </div>
+
+            {/* Batch Flow Visualization Modal */}
+            {selectedBatchId && (
+                <BatchFlowVisualization
+                    batchId={selectedBatchId}
+                    onClose={() => setSelectedBatchId(null)}
+                />
+            )}
         </div>
     );
 };
