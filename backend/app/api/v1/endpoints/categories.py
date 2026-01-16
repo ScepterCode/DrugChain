@@ -4,7 +4,8 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.db.session import get_db
-from app.models import ProductCategory, User
+from app.models import User
+from app.models.product_category import ProductCategory  # Direct import
 from app.schemas.product_category import (
     ProductCategoryCreate,
     ProductCategoryUpdate,
