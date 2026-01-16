@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, extract
+from sqlalchemy import func, and_, extract, text
 from datetime import datetime, timedelta
 from app.db.session import get_db
 from app.api.dependencies import get_current_user, require_role
@@ -8,8 +8,14 @@ from app.models import User, UserRole, Batch, Product, Manufacturer, Pack, Carto
 from app.models.verification import VerificationEvent
 from app.services.blockchain_service import blockchain_service
 from app.services.supply_chain_tracking_service import SupplyChainTrackingService
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# Simple in-memory cache for analytics (production should use Redis)
+_analytics_cache = {}
+_cache_ttl = 300  # 5 minutes
 
 
 @router.get("/manufacturer/dashboard")
@@ -381,33 +387,111 @@ async def get_verification_locations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get verification locations for map visualization"""
+    """Get verification locations for map visualization - OPTIMIZED"""
+    
+    # Create cache key
+    cache_key = f"verification_locations_{current_user.user_id}_{days}"
+    
+    # Check cache first
+    if cache_key in _analytics_cache:
+        cached_data, timestamp = _analytics_cache[cache_key]
+        if datetime.now().timestamp() - timestamp < _cache_ttl:
+            logger.info(f"Returning cached verification locations for user {current_user.user_id}")
+            return {"data": cached_data}
+    
+    logger.info(f"Computing verification locations for user {current_user.user_id}, days={days}")
     
     # Calculate date range
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
     
-    # Query verification events with location data
-    query = db.query(
-        VerificationEvent.location_address,
-        func.count(VerificationEvent.event_id).label('count')
-    ).filter(
-        and_(
-            VerificationEvent.created_at >= start_date,
-            VerificationEvent.created_at <= end_date,
-            VerificationEvent.location_address.isnot(None)
-        )
-    )
-    
-    # Filter by user role
+    # OPTIMIZED: Use raw SQL with proper indexes
     if current_user.role == UserRole.MANUFACTURER and current_user.organization_id:
-        query = query.join(Pack, VerificationEvent.pack_id == Pack.pack_id)\
-                    .join(Batch, Pack.batch_id == Batch.batch_id)\
-                    .filter(Batch.manufacturer_id == current_user.organization_id)
+        # Manufacturer-specific query with joins
+        query = text("""
+            SELECT ve.location_address, COUNT(ve.event_id) as count
+            FROM verification_events ve
+            JOIN packs p ON ve.pack_id = p.pack_id
+            JOIN batches b ON p.batch_id = b.batch_id
+            WHERE ve.created_at >= :start_date 
+            AND ve.created_at <= :end_date
+            AND ve.location_address IS NOT NULL
+            AND b.manufacturer_id = :manufacturer_id
+            GROUP BY ve.location_address
+            ORDER BY count DESC
+            LIMIT 50
+        """)
+        results = db.execute(query, {
+            'start_date': start_date,
+            'end_date': end_date,
+            'manufacturer_id': str(current_user.organization_id)
+        }).fetchall()
+    else:
+        # General query for regulators/admins
+        query = text("""
+            SELECT location_address, COUNT(event_id) as count
+            FROM verification_events
+            WHERE created_at >= :start_date 
+            AND created_at <= :end_date
+            AND location_address IS NOT NULL
+            GROUP BY location_address
+            ORDER BY count DESC
+            LIMIT 50
+        """)
+        results = db.execute(query, {
+            'start_date': start_date,
+            'end_date': end_date
+        }).fetchall()
     
-    results = query.group_by(VerificationEvent.location_address).all()
+    # Process results efficiently
+    locations = []
+    for i, result in enumerate(results):
+        if result.location_address:
+            # Extract city from address (first part before comma)
+            address_parts = result.location_address.split(',')
+            city = address_parts[0].strip() if address_parts else 'Unknown'
+            state = address_parts[-1].strip() if len(address_parts) > 1 else 'Unknown'
+            
+            # Use predefined coordinates for known Nigerian cities
+            coords = get_nigerian_city_coords(city, i)
+            
+            locations.append({
+                'id': f"loc_{i}",
+                'latitude': coords['lat'],
+                'longitude': coords['lng'],
+                'city': city,
+                'state': state,
+                'count': result.count,
+                'recent_verifications': []  # Skip expensive subquery for performance
+            })
     
-    # Nigerian cities with coordinates
+    # Cache the result
+    _analytics_cache[cache_key] = (locations, datetime.now().timestamp())
+    
+    return {"data": locations}
+
+
+def get_nigerian_city_coords(city: str, index: int) -> dict:
+    """Get coordinates for Nigerian cities with fallback"""
+    nigerian_cities = {
+        'Lagos': {'lat': 6.5244, 'lng': 3.3792},
+        'Kano': {'lat': 12.0022, 'lng': 8.5920},
+        'Ibadan': {'lat': 7.3775, 'lng': 3.9470},
+        'Kaduna': {'lat': 10.5222, 'lng': 7.4383},
+        'Port Harcourt': {'lat': 4.8156, 'lng': 7.0498},
+        'Benin City': {'lat': 6.3350, 'lng': 5.6037},
+        'Maiduguri': {'lat': 11.8311, 'lng': 13.1511},
+        'Zaria': {'lat': 11.0804, 'lng': 7.7076},
+        'Aba': {'lat': 5.1066, 'lng': 7.3667},
+        'Jos': {'lat': 9.8965, 'lng': 8.8583},
+        'Ilorin': {'lat': 8.5000, 'lng': 4.5500},
+        'Abuja': {'lat': 9.0579, 'lng': 7.4951}
+    }
+    
+    return nigerian_cities.get(city, {
+        'lat': 9.0820 + (index * 0.1), 
+        'lng': 8.6753 + (index * 0.1)
+    })
     nigerian_cities = {
         'Lagos': {'lat': 6.5244, 'lng': 3.3792},
         'Kano': {'lat': 12.0022, 'lng': 8.5920},
