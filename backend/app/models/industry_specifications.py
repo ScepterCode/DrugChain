@@ -27,7 +27,7 @@ class ElectronicsSpecification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="electronics_spec")
+    # product = relationship("Product", back_populates="electronics_spec")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<ElectronicsSpecification {self.product_id}>"
@@ -54,7 +54,7 @@ class LuxurySpecification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="luxury_spec")
+    # product = relationship("Product", back_populates="luxury_spec")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<LuxurySpecification {self.product_id}>"
@@ -81,7 +81,7 @@ class FoodSpecification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="food_spec")
+    # product = relationship("Product", back_populates="food_spec")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<FoodSpecification {self.product_id}>"
@@ -106,7 +106,7 @@ class AutomotiveSpecification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="automotive_spec")
+    # product = relationship("Product", back_populates="automotive_spec")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<AutomotiveSpecification {self.product_id}>"
@@ -132,7 +132,7 @@ class CosmeticsSpecification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="cosmetics_spec")
+    # product = relationship("Product", back_populates="cosmetics_spec")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<CosmeticsSpecification {self.product_id}>"
