@@ -8,6 +8,7 @@ from datetime import datetime
 from app.db.session import get_db
 from app.models import Product, User, LuxurySpecification, Pack
 from app.schemas.product_category import EnhancedProductCreate, EnhancedProductResponse
+from app.schemas.product import ProductResponse  # Use regular schema instead
 from app.api.dependencies import get_current_user, require_role
 from app.services.verification_service import VerificationService
 
@@ -114,7 +115,7 @@ async def estimate_resale_value(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/products", response_model=EnhancedProductResponse)
+@router.post("/products", response_model=ProductResponse)
 async def create_luxury_product(
     product_data: dict,
     db: Session = Depends(get_db),
@@ -159,7 +160,7 @@ async def create_luxury_product(
         db.commit()
         db.refresh(base_product)
         
-        return EnhancedProductResponse.from_orm(base_product)
+        return ProductResponse.from_orm(base_product)
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

@@ -168,12 +168,13 @@ async def delete_category(
             detail="Category not found"
         )
     
-    # Check if category has products
-    if category.products:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete category that has products. Move products to another category first."
-        )
+    # Check if category has products (disabled until migration is applied)
+    # TODO: Re-enable this check after migration is applied
+    # if category.products:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Cannot delete category that has products. Move products to another category first."
+    #     )
     
     # Check if category has subcategories
     if category.subcategories:

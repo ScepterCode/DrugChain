@@ -24,7 +24,7 @@ class ProductCategory(Base):
     # Relationships
     parent_category = relationship("ProductCategory", remote_side=[category_id])
     subcategories = relationship("ProductCategory", back_populates="parent_category")
-    products = relationship("Product", back_populates="category")
+    # products = relationship("Product", back_populates="category")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<ProductCategory {self.category_name}>"
@@ -45,7 +45,7 @@ class ProductAttribute(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="attributes")
+    # product = relationship("Product", back_populates="attributes")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<ProductAttribute {self.attribute_name}: {self.attribute_value}>"
@@ -69,7 +69,7 @@ class Certification(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    product = relationship("Product", back_populates="certifications")
+    # product = relationship("Product", back_populates="certifications")  # Disabled until migration is applied
 
     def __repr__(self):
         return f"<Certification {self.certification_name}>"
