@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Html5QrcodeScanner } from 'html5-qrcode';
 import { verificationService, VerificationResponse } from '../services/verificationService';
 import VerificationResult from '../components/verification/VerificationResult';
+import QRScanner from '../components/QRScanner';
 
 const VerificationPage: React.FC = () => {
     const location = useLocation();
@@ -14,68 +14,11 @@ const VerificationPage: React.FC = () => {
     const [result, setResult] = useState<VerificationResponse | null>(null);
     const [showScanner, setShowScanner] = useState(false);
 
-    // Ref to track if scanner is currently rendered to prevent double-render issues in StrictMode
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-
     useEffect(() => {
         if (initialPackId) {
             verify(initialPackId);
         }
     }, [initialPackId]);
-
-    useEffect(() => {
-        let scanner: Html5QrcodeScanner | null = null;
-
-        if (showScanner) {
-            // Short timeout to ensure DOM element exists
-            setTimeout(() => {
-                if (!document.getElementById('reader')) return;
-
-                // Clear existing if any (strict mode safety)
-                if (scannerRef.current) {
-                    try { scannerRef.current.clear(); } catch (e) {/* ignore */ }
-                }
-
-                scanner = new Html5QrcodeScanner(
-                    "reader",
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                        showTorchButtonIfSupported: true
-                    },
-                    /* verbose= */ false
-                );
-
-                scannerRef.current = scanner;
-
-                scanner.render(
-                    (decodedText) => {
-                        handleScan(decodedText);
-                        // Optional: Close scanner on success
-                        // setShowScanner(false); 
-                        // But handleScan calls verify which might update state/UI anyway
-                    },
-                    (_) => {
-                        // parse error, ignore or log
-                    }
-                );
-            }, 100);
-        } else {
-            // Cleanup if showScanner toggles off
-            if (scannerRef.current) {
-                scannerRef.current.clear().catch(console.error);
-                scannerRef.current = null;
-            }
-        }
-
-        return () => {
-            if (scannerRef.current) {
-                scannerRef.current.clear().catch((err) => console.log('Scanner Cleanup Error:', err));
-                scannerRef.current = null;
-            }
-        };
-    }, [showScanner]);
 
     const verify = async (id: string) => {
         if (!id.trim()) return;
@@ -113,9 +56,11 @@ const VerificationPage: React.FC = () => {
                 }
             }
 
-            // Only update if different or forcing verify
+            // Update pack ID and verify
             setPackId(scannedId);
             verify(scannedId);
+            // Close scanner after successful scan
+            setShowScanner(false);
         }
     };
 
@@ -143,18 +88,17 @@ const VerificationPage: React.FC = () => {
 
                 {!result ? (
                     <>
-                        {showScanner ? (
+                        {showScanner && (
                             <div className="mb-6">
-                                <div id="reader" className="bg-white p-4 rounded-lg shadow-sm" style={{ width: '100%', minHeight: '300px' }}></div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowScanner(false)}
-                                    className="mt-4 w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Cancel Scan
-                                </button>
+                                <QRScanner
+                                    isVisible={showScanner}
+                                    onScan={handleScan}
+                                    onClose={() => setShowScanner(false)}
+                                />
                             </div>
-                        ) : (
+                        )}
+
+                        {!showScanner && (
                             <div className="mb-6 text-center">
                                 <button
                                     type="button"
@@ -164,7 +108,7 @@ const VerificationPage: React.FC = () => {
                                     <svg className="mr-2 -ml-1 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                                     </svg>
-                                    Scan QR Code
+                                    Scan using camera directly
                                 </button>
                                 <div className="mt-4 relative">
                                     <div className="absolute inset-0 flex items-center" aria-hidden="true">

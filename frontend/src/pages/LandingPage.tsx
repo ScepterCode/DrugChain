@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Html5QrcodeScanner } from 'html5-qrcode';
 import { verificationService, VerificationResponse } from '../services/verificationService';
 import VerificationResult from '../components/verification/VerificationResult';
+import QRScanner from '../components/QRScanner';
 
 const LandingPage: React.FC = () => {
     const [packId, setPackId] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<VerificationResponse | null>(null);
     const [showScanner, setShowScanner] = useState(false);
-    const [scanner, setScanner] = useState<Html5QrcodeScanner | null>(null);
 
     const verify = async (id: string) => {
         if (!id.trim()) return;
@@ -63,35 +62,9 @@ const LandingPage: React.FC = () => {
             }
             setPackId(scannedId);
             verify(scannedId);
+            // Close scanner after successful scan
+            setShowScanner(false);
         }
-    };
-
-    const startScanner = () => {
-        setShowScanner(true);
-        setTimeout(() => {
-            if (document.getElementById('reader')) {
-                const newScanner = new Html5QrcodeScanner(
-                    "reader",
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                        showTorchButtonIfSupported: true
-                    },
-                    false
-                );
-                setScanner(newScanner);
-                newScanner.render(handleScan, () => {});
-            }
-        }, 100);
-    };
-
-    const stopScanner = () => {
-        if (scanner) {
-            scanner.clear().catch(console.error);
-            setScanner(null);
-        }
-        setShowScanner(false);
     };
 
     const handleVerify = async (e: React.FormEvent) => {
@@ -102,7 +75,7 @@ const LandingPage: React.FC = () => {
     const handleReset = () => {
         setResult(null);
         setPackId('');
-        stopScanner();
+        setShowScanner(false);
     };
 
     return (
@@ -172,20 +145,17 @@ const LandingPage: React.FC = () => {
 
                             {showScanner ? (
                                 <div className="mb-6">
-                                    <div id="reader" className="bg-gray-50 p-4 rounded-lg" style={{ width: '100%', minHeight: '300px' }}></div>
-                                    <button
-                                        type="button"
-                                        onClick={stopScanner}
-                                        className="mt-4 w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                    >
-                                        Cancel Scan
-                                    </button>
+                                    <QRScanner
+                                        isVisible={showScanner}
+                                        onScan={handleScan}
+                                        onClose={() => setShowScanner(false)}
+                                    />
                                 </div>
                             ) : (
                                 <div className="mb-6 text-center">
                                     <button
                                         type="button"
-                                        onClick={startScanner}
+                                        onClick={() => setShowScanner(true)}
                                         className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                                     >
                                         <svg className="mr-2 -ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
