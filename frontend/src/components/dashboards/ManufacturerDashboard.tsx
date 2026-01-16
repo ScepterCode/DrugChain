@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks';
 import { analyticsService } from '../../services/analyticsService';
+import { supplyChainService, ManufacturerBatch } from '../../services/supplyChainService';
 import VerificationChart from '../analytics/VerificationChart';
 import GeographicDistribution from '../analytics/GeographicDistribution';
 import BatchFlowVisualization from '../supply-chain/BatchFlowVisualization';
@@ -15,7 +16,7 @@ const ManufacturerDashboard: React.FC = () => {
         verification_rate: 0
     });
     const [loading, setLoading] = useState(true);
-    const [recentBatches, setRecentBatches] = useState<any[]>([]);
+    const [recentBatches, setRecentBatches] = useState<ManufacturerBatch[]>([]);
     const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -37,10 +38,13 @@ const ManufacturerDashboard: React.FC = () => {
 
         const loadRecentBatches = async () => {
             try {
-                const response = await analyticsService.getManufacturerBatches();
+                // FIXED: Use supply chain service instead of analytics service
+                const response = await supplyChainService.getManufacturerBatches();
                 setRecentBatches(response.slice(0, 5)); // Show only 5 most recent
             } catch (error) {
                 console.error('Failed to load recent batches:', error);
+                // Fallback to empty array to prevent UI crash
+                setRecentBatches([]);
             }
         };
 
