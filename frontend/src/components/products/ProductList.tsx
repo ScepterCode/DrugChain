@@ -17,10 +17,8 @@ const ProductList: React.FC = () => {
             setProducts(data);
             setError(null);
             
-            // If no products were returned, show a helpful message
-            if (data.length === 0) {
-                setError("No products available. This could be due to server issues or you may need to add products to your catalog.");
-            }
+            // Don't treat empty results as an error - this is a normal state
+            console.log(`Successfully loaded ${data.length} products`);
         } catch (err: any) {
             console.error('Failed to fetch products:', err);
             
@@ -88,8 +86,23 @@ const ProductList: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {products.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                                            No products found. Start by adding one to your catalog.
+                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <div className="text-gray-400 text-6xl mb-4">📦</div>
+                                                <h3 className="text-lg font-medium text-gray-900 mb-2">No products in your catalog</h3>
+                                                <p className="text-sm text-gray-500 mb-4">
+                                                    Get started by adding your first product to the system.
+                                                </p>
+                                                <Link
+                                                    to="/portal/products/new"
+                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                                >
+                                                    <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    Add Your First Product
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
