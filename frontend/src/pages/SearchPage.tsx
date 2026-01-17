@@ -1,22 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-
-interface SearchResult {
-    id: string;
-    type: 'product' | 'batch' | 'pack' | 'verification';
-    title: string;
-    description: string;
-    metadata: Record<string, any>;
-    created_at: string;
-}
+import { searchService, UnifiedSearchResult } from '../services/searchService';
 
 const SearchPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [query, setQuery] = useState(searchParams.get('q') || '');
-    const [searchType, setSearchType] = useState('all');
-    const [results, setResults] = useState<SearchResult[]>([]);
+    const [searchType, setSearchType] = useState<'all' | 'product' | 'batch' | 'pack' | 'manufacturer'>('all');
+    const [results, setResults] = useState<UnifiedSearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hasSearched, setHasSearched] = useState(false);
 
     // Auto-search if query parameter is provided
     useEffect(() => {
@@ -32,64 +25,14 @@ const SearchPage: React.FC = () => {
 
         setLoading(true);
         setError(null);
+        setHasSearched(true);
 
         try {
-            // TODO: Implement actual search API call
-            // For now, return mock results based on query
-            await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
-            
-            const mockResults: SearchResult[] = [
-                {
-                    id: `prod-${Date.now()}`,
-                    type: 'product',
-                    title: `Product: ${searchQuery}`,
-                    description: `Pharmaceutical product matching "${searchQuery}" - Active ingredient details and manufacturing information`,
-                    metadata: { 
-                        manufacturer: 'ABC Pharma Ltd', 
-                        status: 'Active',
-                        batch_count: 15,
-                        last_verified: '2024-01-15'
-                    },
-                    created_at: new Date().toISOString()
-                },
-                {
-                    id: `batch-${Date.now()}`,
-                    type: 'batch',
-                    title: `Batch containing "${searchQuery}"`,
-                    description: `Production batch with related information for products matching your search criteria`,
-                    metadata: { 
-                        batch_size: 1000, 
-                        status: 'Distributed',
-                        manufacturer: 'ABC Pharma Ltd',
-                        production_date: '2024-01-10'
-                    },
-                    created_at: new Date().toISOString()
-                },
-                {
-                    id: `pack-${Date.now()}`,
-                    type: 'pack',
-                    title: `Pack ID: ${searchQuery.toUpperCase()}`,
-                    description: `Individual product pack with verification history and supply chain tracking`,
-                    metadata: { 
-                        status: 'Verified', 
-                        verification_count: 3,
-                        last_location: 'Lagos, Nigeria',
-                        distributor: 'XYZ Distribution'
-                    },
-                    created_at: new Date().toISOString()
-                }
-            ];
-
-            // Filter results based on search type
-            const filteredResults = searchType === 'all' 
-                ? mockResults 
-                : mockResults.filter(result => result.type === searchType);
-
-            setResults(filteredResults);
+            const searchResults = await searchService.unifiedSearch(searchQuery, searchType, 50);
+            setResults(searchResults);
         } catch (err) {
             setError('Failed to perform search. Please try again.');
             console.error('Search error:', err);
-            // Set empty results on error
             setResults([]);
         } finally {
             setLoading(false);
@@ -121,10 +64,10 @@ const SearchPage: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                 );
-            case 'verification':
+            case 'manufacturer':
                 return (
-                    <svg className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 );
             default:
@@ -136,6 +79,26 @@ const SearchPage: React.FC = () => {
         }
     };
 
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'product': return 'bg-blue-100 text-blue-800';
+            case 'batch': return 'bg-green-100 text-green-800';
+            case 'pack': return 'bg-purple-100 text-purple-800';
+            case 'manufacturer': return 'bg-orange-100 text-orange-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getDetailLink = (result: UnifiedSearchResult) => {
+        switch (result.type) {
+            case 'product': return `/portal/products`;
+            case 'batch': return `/portal/batches/${result.id}`;
+            case 'pack': return `/portal/verify?pack_id=${result.id}`;
+            case 'manufacturer': return `/portal/search?q=${result.title}`;
+            default: return '#';
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             {/* Header */}
@@ -144,7 +107,7 @@ const SearchPage: React.FC = () => {
                     Search & Investigation
                 </h1>
                 <p className="mt-2 text-gray-600">
-                    Search across products, batches, packs, and verification records for regulatory oversight.
+                    Search across products, batches, packs, and manufacturers for regulatory oversight and investigation.
                 </p>
             </div>
 
@@ -193,29 +156,29 @@ const SearchPage: React.FC = () => {
                                     id="search-query"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Enter product code, batch ID, pack ID, or keywords..."
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    placeholder="Enter product name, batch ID, pack ID, manufacturer name, or NAFDAC number..."
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm p-2 border"
                                 />
                             </div>
-                            <div className="w-48">
+                            <div className="w-52">
                                 <label htmlFor="search-type" className="block text-sm font-medium text-gray-700">
                                     Search Type
                                 </label>
                                 <select
                                     id="search-type"
                                     value={searchType}
-                                    onChange={(e) => setSearchType(e.target.value)}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    onChange={(e) => setSearchType(e.target.value as any)}
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm p-2 border"
                                 >
                                     <option value="all">All Types</option>
                                     <option value="product">Products</option>
                                     <option value="batch">Batches</option>
                                     <option value="pack">Packs</option>
-                                    <option value="verification">Verifications</option>
+                                    <option value="manufacturer">Manufacturers</option>
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div className="flex justify-end">
                             <button
                                 type="submit"
@@ -256,10 +219,10 @@ const SearchPage: React.FC = () => {
                         <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                             Search Results ({results.length})
                         </h3>
-                        
+
                         <div className="space-y-4">
                             {results.map((result) => (
-                                <div key={result.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
+                                <div key={`${result.type}-${result.id}`} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
                                     <div className="flex items-start space-x-3">
                                         <div className="flex-shrink-0 mt-1">
                                             {getResultIcon(result.type)}
@@ -269,37 +232,38 @@ const SearchPage: React.FC = () => {
                                                 <h4 className="text-sm font-medium text-gray-900">
                                                     {result.title}
                                                 </h4>
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    result.type === 'product' ? 'bg-blue-100 text-blue-800' :
-                                                    result.type === 'batch' ? 'bg-green-100 text-green-800' :
-                                                    result.type === 'pack' ? 'bg-purple-100 text-purple-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(result.type)}`}>
                                                     {result.type}
                                                 </span>
                                             </div>
                                             <p className="mt-1 text-sm text-gray-600">
                                                 {result.description}
                                             </p>
-                                            <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                                                <span>ID: {result.id}</span>
-                                                <span>Created: {new Date(result.created_at).toLocaleDateString()}</span>
-                                                {Object.entries(result.metadata).map(([key, value]) => (
-                                                    <span key={key}>{key}: {value}</span>
+                                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                                <span>ID: {result.id.substring(0, 12)}...</span>
+                                                {Object.entries(result.metadata).slice(0, 4).map(([key, value]) => (
+                                                    <span key={key} className="bg-gray-100 px-2 py-0.5 rounded">
+                                                        {key.replace(/_/g, ' ')}: {String(value).substring(0, 20)}
+                                                    </span>
                                                 ))}
                                             </div>
                                         </div>
                                         <div className="flex-shrink-0">
                                             <div className="flex space-x-2">
+                                                {result.type === 'pack' && (
+                                                    <Link
+                                                        to={`/portal/verify?pack_id=${result.id}`}
+                                                        className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                                                    >
+                                                        Verify
+                                                    </Link>
+                                                )}
                                                 <Link
-                                                    to={`/portal/verify?id=${result.id}&type=${result.type}`}
-                                                    className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                                                    to={getDetailLink(result)}
+                                                    className="text-gray-600 hover:text-gray-500 text-sm font-medium"
                                                 >
-                                                    Verify
-                                                </Link>
-                                                <button className="text-gray-600 hover:text-gray-500 text-sm font-medium">
                                                     View Details
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -311,7 +275,7 @@ const SearchPage: React.FC = () => {
             )}
 
             {/* No Results */}
-            {!loading && query && results.length === 0 && !error && (
+            {!loading && hasSearched && results.length === 0 && !error && (
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
                         <div className="text-center py-12">
@@ -320,7 +284,7 @@ const SearchPage: React.FC = () => {
                             </svg>
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No results found</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                No items match your search criteria. Try adjusting your search terms or search type.
+                                No items match your search criteria "{query}". Try adjusting your search terms or search type.
                             </p>
                         </div>
                     </div>
@@ -328,7 +292,7 @@ const SearchPage: React.FC = () => {
             )}
 
             {/* Empty State */}
-            {!query && results.length === 0 && !loading && (
+            {!hasSearched && !loading && (
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
                         <div className="text-center py-12">
@@ -337,18 +301,17 @@ const SearchPage: React.FC = () => {
                             </svg>
                             <h3 className="mt-2 text-sm font-medium text-gray-900">Start your investigation</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Enter a search query above to find products, batches, packs, or verification records.
+                                Enter a search query above to find products, batches, packs, or manufacturers.
                             </p>
-                            <div className="mt-6">
-                                <button
-                                    onClick={() => {
-                                        setQuery('SAMPLE123');
-                                        performSearch('SAMPLE123');
-                                    }}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                                >
-                                    Try Sample Search
-                                </button>
+                            <div className="mt-6 text-sm text-gray-600">
+                                <p className="font-medium mb-2">Search tips:</p>
+                                <ul className="space-y-1 text-left max-w-md mx-auto">
+                                    <li>• Search by product name (e.g., "Panadol")</li>
+                                    <li>• Search by batch ID (e.g., "BATCH-2024-001")</li>
+                                    <li>• Search by pack ID for verification history</li>
+                                    <li>• Search by manufacturer name</li>
+                                    <li>• Search by NAFDAC registration number</li>
+                                </ul>
                             </div>
                         </div>
                     </div>

@@ -35,28 +35,29 @@ const Layout: React.FC = () => {
                     { name: 'Batches', href: '/portal/batches', current: location.pathname.startsWith('/portal/batches') },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
                 ];
-            
+
             case 'DISTRIBUTOR':
                 return [
                     ...baseNavigation,
                     { name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
                 ];
-            
+
             case 'PHARMACY':
                 return [
                     ...baseNavigation,
                     { name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
                 ];
-            
+
             case 'REGULATOR':
                 return [
-                    { name: 'Regulator Dashboard', href: '/portal/regulator', current: location.pathname === '/portal/regulator' },
+                    ...baseNavigation,
+                    { name: 'Verification', href: '/portal/verify', current: location.pathname === '/portal/verify' },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
                     { name: 'Search & Investigation', href: '/portal/search', current: location.pathname === '/portal/search' }
                 ];
-            
+
             case 'ADMIN':
             case 'SYSTEM_ADMIN':
                 return [
@@ -66,7 +67,7 @@ const Layout: React.FC = () => {
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
                     { name: 'User Management', href: '/portal/users', current: location.pathname === '/portal/users' }
                 ];
-            
+
             case 'RETAILER':
             case 'MARKETPLACE':
                 return [
@@ -74,13 +75,13 @@ const Layout: React.FC = () => {
                     { name: 'Verification', href: '/portal/verify', current: location.pathname === '/portal/verify' },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
                 ];
-            
+
             case 'CONSUMER':
                 return [
                     ...baseNavigation,
                     { name: 'Verification', href: '/portal/verify', current: location.pathname === '/portal/verify' }
                 ];
-            
+
             default:
                 return baseNavigation;
         }
@@ -105,11 +106,10 @@ const Layout: React.FC = () => {
                                     <Link
                                         key={item.name}
                                         to={item.href}
-                                        className={`${
-                                            item.current
+                                        className={`${item.current
                                                 ? 'border-primary-500 text-gray-900'
                                                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                                        } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                                            } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                                     >
                                         {item.name}
                                     </Link>

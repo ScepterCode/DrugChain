@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from uuid import UUID
@@ -110,6 +110,8 @@ class CertificationResponse(CertificationBase):
 
 # Enhanced Product Schemas
 class EnhancedProductBase(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+    
     product_code: str
     product_name: str
     description: Optional[str] = None

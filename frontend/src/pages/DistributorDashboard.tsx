@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
 import { analyticsService } from '../services/analyticsService';
 
@@ -166,11 +167,10 @@ const DistributorDashboard: React.FC = () => {
                                                     {item.packs.toLocaleString()}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                                        item.status === 'NORMAL' ? 'bg-green-100 text-green-800' :
-                                                        item.status === 'LOW' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-red-100 text-red-800'
-                                                    }`}>
+                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'NORMAL' ? 'bg-green-100 text-green-800' :
+                                                            item.status === 'LOW' ? 'bg-yellow-100 text-yellow-800' :
+                                                                'bg-red-100 text-red-800'
+                                                        }`}>
                                                         {item.status.replace('_', ' ')}
                                                     </span>
                                                 </td>
@@ -202,9 +202,8 @@ const DistributorDashboard: React.FC = () => {
                                                 )}
                                                 <div className="relative flex space-x-3">
                                                     <div>
-                                                        <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
-                                                            transfer.type === 'RECEIVED' ? 'bg-green-500' : 'bg-blue-500'
-                                                        }`}>
+                                                        <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${transfer.type === 'RECEIVED' ? 'bg-green-500' : 'bg-blue-500'
+                                                            }`}>
                                                             <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                                 {transfer.type === 'RECEIVED' ? (
                                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -244,8 +243,19 @@ const DistributorDashboard: React.FC = () => {
                 {/* Quick Actions */}
                 <div className="mt-8">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <button 
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            to="/portal/verify"
+                            className="relative block w-full border-2 border-primary-300 border-dashed rounded-lg p-6 text-center hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                            <svg className="mx-auto h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="mt-2 block text-sm font-medium text-gray-900">Verify Product</span>
+                            <span className="text-xs text-primary-600">Scan & verify authenticity</span>
+                        </Link>
+
+                        <button
                             onClick={() => alert('Stock receiving functionality will be implemented in Phase 2')}
                             className="relative block w-full border-2 border-green-300 border-dashed rounded-lg p-6 text-center hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                         >
@@ -256,7 +266,7 @@ const DistributorDashboard: React.FC = () => {
                             <span className="text-xs text-green-600">Scan incoming cartons</span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => alert('Transfer functionality will be implemented in Phase 2')}
                             className="relative block w-full border-2 border-blue-300 border-dashed rounded-lg p-6 text-center hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
@@ -271,13 +281,13 @@ const DistributorDashboard: React.FC = () => {
                             </span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => {
                                 const csvContent = [
                                     ['Date', 'Inventory Cartons', 'Inventory Packs', 'Pending Transfers', 'Low Stock Alerts'],
                                     [new Date().toISOString().split('T')[0], stats?.total_inventory_cartons || 0, stats?.total_inventory_packs || 0, stats?.pending_transfers || 0, stats?.low_stock_alerts || 0]
                                 ].map(row => row.join(',')).join('\n');
-                                
+
                                 const blob = new Blob([csvContent], { type: 'text/csv' });
                                 const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement('a');
@@ -301,7 +311,7 @@ const DistributorDashboard: React.FC = () => {
                 <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
                     <h3 className="text-lg font-medium text-blue-900">Phase 2 Features Coming Soon</h3>
                     <p className="mt-2 text-sm text-blue-700">
-                        Full supply chain tracking, transfer management, and inventory optimization features 
+                        Full supply chain tracking, transfer management, and inventory optimization features
                         will be available in the next phase of development.
                     </p>
                 </div>

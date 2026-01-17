@@ -17,9 +17,9 @@ import VerificationPage from './pages/VerificationPage';
 import AboutPage from './pages/AboutPage';
 import HowToUsePage from './pages/HowToUsePage';
 import DistributorDashboard from './pages/DistributorDashboard';
-import RegulatorDashboard from './pages/RegulatorDashboard';
 import SearchPage from './pages/SearchPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
     return (
@@ -34,7 +34,7 @@ function App() {
                         <Route path="/verify" element={<VerificationPage />} />
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/how-to-use" element={<HowToUsePage />} />
-                        
+
                         {/* Protected routes */}
                         <Route path="/portal" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                             <Route index element={<Navigate to="/portal/dashboard" replace />} />
@@ -47,15 +47,17 @@ function App() {
                             <Route path="analytics" element={<AnalyticsPage />} />
                             <Route path="users" element={<UserManagementPage />} />
                             <Route path="distributor" element={<DistributorDashboard />} />
-                            <Route path="regulator" element={<RegulatorDashboard />} />
                             <Route path="verify" element={<VerificationPage />} />
                             <Route path="search" element={<SearchPage />} />
                         </Route>
-                        
+
                         {/* Legacy redirects */}
                         <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
                         <Route path="/batches" element={<Navigate to="/portal/batches" replace />} />
                         <Route path="/batches/*" element={<Navigate to="/portal/batches" replace />} />
+
+                        {/* 404 catch-all route */}
+                        <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </div>
             </Router>
