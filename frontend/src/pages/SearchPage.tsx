@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
+import { Link, useSearchParams } from 'react-router-dom';
 
 interface SearchResult {
     id: string;
@@ -11,51 +12,92 @@ interface SearchResult {
 }
 
 const SearchPage: React.FC = () => {
-    const { user } = useAppSelector((state) => state.auth);
-    const [query, setQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const [query, setQuery] = useState(searchParams.get('q') || '');
     const [searchType, setSearchType] = useState('all');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!query.trim()) return;
+    // Auto-search if query parameter is provided
+    useEffect(() => {
+        const initialQuery = searchParams.get('q');
+        if (initialQuery) {
+            setQuery(initialQuery);
+            performSearch(initialQuery);
+        }
+    }, [searchParams]);
+
+    const performSearch = async (searchQuery: string) => {
+        if (!searchQuery.trim()) return;
 
         setLoading(true);
         setError(null);
 
         try {
             // TODO: Implement actual search API call
-            // For now, return mock results
+            // For now, return mock results based on query
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
             
             const mockResults: SearchResult[] = [
                 {
-                    id: '1',
+                    id: `prod-${Date.now()}`,
                     type: 'product',
-                    title: `Product matching "${query}"`,
-                    description: 'Pharmaceutical product with matching criteria',
-                    metadata: { manufacturer: 'ABC Pharma', status: 'Active' },
+                    title: `Product: ${searchQuery}`,
+                    description: `Pharmaceutical product matching "${searchQuery}" - Active ingredient details and manufacturing information`,
+                    metadata: { 
+                        manufacturer: 'ABC Pharma Ltd', 
+                        status: 'Active',
+                        batch_count: 15,
+                        last_verified: '2024-01-15'
+                    },
                     created_at: new Date().toISOString()
                 },
                 {
-                    id: '2',
+                    id: `batch-${Date.now()}`,
                     type: 'batch',
-                    title: `Batch containing "${query}"`,
-                    description: 'Production batch with related information',
-                    metadata: { batch_size: 1000, status: 'Distributed' },
+                    title: `Batch containing "${searchQuery}"`,
+                    description: `Production batch with related information for products matching your search criteria`,
+                    metadata: { 
+                        batch_size: 1000, 
+                        status: 'Distributed',
+                        manufacturer: 'ABC Pharma Ltd',
+                        production_date: '2024-01-10'
+                    },
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: `pack-${Date.now()}`,
+                    type: 'pack',
+                    title: `Pack ID: ${searchQuery.toUpperCase()}`,
+                    description: `Individual product pack with verification history and supply chain tracking`,
+                    metadata: { 
+                        status: 'Verified', 
+                        verification_count: 3,
+                        last_location: 'Lagos, Nigeria',
+                        distributor: 'XYZ Distribution'
+                    },
                     created_at: new Date().toISOString()
                 }
             ];
 
-            setResults(mockResults);
+            // Filter results based on search type
+            const filteredResults = searchType === 'all' 
+                ? mockResults 
+                : mockResults.filter(result => result.type === searchType);
+
+            setResults(filteredResults);
         } catch (err) {
             setError('Failed to perform search. Please try again.');
             console.error('Search error:', err);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await performSearch(query);
     };
 
     const getResultIcon = (type: string) => {
@@ -103,6 +145,37 @@ const SearchPage: React.FC = () => {
                 <p className="mt-2 text-gray-600">
                     Search across products, batches, packs, and verification records for regulatory oversight.
                 </p>
+            </div>
+
+            {/* Quick Verification Section */}
+            <div className="bg-white shadow rounded-lg mb-8">
+                <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Product Verification</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Need to verify a specific product? Use the quick verification tool below.
+                    </p>
+                    <div className="flex space-x-4">
+                        <Link
+                            to="/portal/verify"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Verify Product
+                        </Link>
+                        <Link
+                            to="/portal/verify"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Scan QR Code
+                        </Link>
+                    </div>
+                </div>
             </div>
 
             {/* Search Form */}
@@ -216,9 +289,17 @@ const SearchPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex-shrink-0">
-                                            <button className="text-primary-600 hover:text-primary-500 text-sm font-medium">
-                                                View Details
-                                            </button>
+                                            <div className="flex space-x-2">
+                                                <Link
+                                                    to={`/portal/verify?id=${result.id}&type=${result.type}`}
+                                                    className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                                                >
+                                                    Verify
+                                                </Link>
+                                                <button className="text-gray-600 hover:text-gray-500 text-sm font-medium">
+                                                    View Details
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

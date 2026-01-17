@@ -116,7 +116,7 @@ const RetailerDashboard: React.FC = () => {
                     <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <Link
-                            to="/verify"
+                            to="/portal/verify"
                             className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg border border-gray-300 hover:border-primary-500"
                         >
                             <div>

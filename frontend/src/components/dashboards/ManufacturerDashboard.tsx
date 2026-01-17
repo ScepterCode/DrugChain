@@ -218,6 +218,28 @@ const ManufacturerDashboard: React.FC = () => {
                         </Link>
 
                         <Link
+                            to="/portal/verify"
+                            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg border border-gray-300 hover:border-primary-500"
+                        >
+                            <div>
+                                <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-600 group-hover:bg-green-100">
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </span>
+                            </div>
+                            <div className="mt-8">
+                                <h3 className="text-lg font-medium">
+                                    <span className="absolute inset-0" aria-hidden="true" />
+                                    Verify Product
+                                </h3>
+                                <p className="mt-2 text-sm text-gray-500">
+                                    Verify product authenticity and track verifications
+                                </p>
+                            </div>
+                        </Link>
+
+                        <Link
                             to="/portal/analytics"
                             className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg border border-gray-300 hover:border-primary-500"
                         >

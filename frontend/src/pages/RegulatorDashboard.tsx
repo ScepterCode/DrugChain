@@ -151,8 +151,8 @@ const RegulatorDashboard: React.FC = () => {
                                 const formData = new FormData(e.currentTarget);
                                 const query = formData.get('search-query');
                                 if (query) {
-                                    // TODO: Implement search functionality
-                                    alert(`Searching for: ${query}`);
+                                    // Navigate to verification page with the query
+                                    window.location.href = `/portal/verify?q=${encodeURIComponent(query.toString())}`;
                                 }
                             }}
                         >
@@ -172,9 +172,29 @@ const RegulatorDashboard: React.FC = () => {
                                 <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                Search
+                                Search & Verify
                             </button>
                         </form>
+                        <div className="mt-4 flex space-x-4">
+                            <Link
+                                to="/portal/verify"
+                                className="inline-flex items-center px-4 py-2 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            >
+                                <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Quick Verify
+                            </Link>
+                            <Link
+                                to="/portal/search"
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            >
+                                <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                Advanced Search
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -231,6 +251,17 @@ const RegulatorDashboard: React.FC = () => {
                 <div className="mt-8">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Regulatory Actions</h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            to="/portal/verify"
+                            className="relative block w-full border-2 border-green-300 border-dashed rounded-lg p-6 text-center hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                            <svg className="mx-auto h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="mt-2 block text-sm font-medium text-gray-900">Product Verification</span>
+                            <span className="text-xs text-green-600">Verify Authenticity</span>
+                        </Link>
+
                         <button 
                             onClick={() => alert('Search functionality will be implemented in Phase 2')}
                             className="relative block w-full border-2 border-primary-300 border-dashed rounded-lg p-6 text-center hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

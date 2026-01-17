@@ -23,10 +23,6 @@ const RoleBasedDashboard: React.FC = () => {
             case 'PHARMACY':
                 return <DistributorDashboard />;
             
-            case 'REGULATOR':
-            case 'SYSTEM_ADMIN':
-                return <RegulatorDashboard />;
-            
             case 'RETAILER':
             case 'MARKETPLACE':
                 return <RetailerDashboard />;
@@ -34,8 +30,12 @@ const RoleBasedDashboard: React.FC = () => {
             case 'CONSUMER':
                 return <ConsumerDashboard />;
             
+            case 'REGULATOR':
+            case 'SYSTEM_ADMIN':
             case 'ADMIN':
-                return <RegulatorDashboard />; // Admins get full access
+                // Redirect regulators to their dedicated dashboard route
+                window.location.href = '/portal/regulator';
+                return <div>Redirecting...</div>;
             
             default:
                 return <ConsumerDashboard />; // Default to consumer view
