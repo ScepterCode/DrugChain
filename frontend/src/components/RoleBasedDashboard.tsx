@@ -33,9 +33,7 @@ const RoleBasedDashboard: React.FC = () => {
             case 'REGULATOR':
             case 'SYSTEM_ADMIN':
             case 'ADMIN':
-                // Redirect regulators to their dedicated dashboard route
-                window.location.href = '/portal/regulator';
-                return <div>Redirecting...</div>;
+                return <RegulatorDashboard />;
             
             default:
                 return <ConsumerDashboard />; // Default to consumer view

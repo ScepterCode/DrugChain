@@ -37,6 +37,17 @@ const RegulatorDashboard: React.FC = () => {
             setStats(data as RegulatorStats);
         } catch (err) {
             console.error("Failed to load regulator stats", err);
+            // Set default stats to prevent blank page
+            setStats({
+                total_manufacturers: 0,
+                total_products: 0,
+                total_verifications_nationwide: 0,
+                total_batches: 0,
+                counterfeit_alerts: 0,
+                verification_trends: [],
+                geographic_distribution: [],
+                recent_alerts: []
+            });
         } finally {
             setLoading(false);
         }

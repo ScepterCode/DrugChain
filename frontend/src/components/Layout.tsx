@@ -52,7 +52,6 @@ const Layout: React.FC = () => {
             
             case 'REGULATOR':
                 return [
-                    ...baseNavigation,
                     { name: 'Regulator Dashboard', href: '/portal/regulator', current: location.pathname === '/portal/regulator' },
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' },
                     { name: 'Search & Investigation', href: '/portal/search', current: location.pathname === '/portal/search' }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAppSelector } from '../store/hooks';
 import { Link, useSearchParams } from 'react-router-dom';
 
 interface SearchResult {
@@ -37,7 +36,7 @@ const SearchPage: React.FC = () => {
         try {
             // TODO: Implement actual search API call
             // For now, return mock results based on query
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
             
             const mockResults: SearchResult[] = [
                 {
@@ -90,6 +89,8 @@ const SearchPage: React.FC = () => {
         } catch (err) {
             setError('Failed to perform search. Please try again.');
             console.error('Search error:', err);
+            // Set empty results on error
+            setResults([]);
         } finally {
             setLoading(false);
         }
@@ -327,7 +328,7 @@ const SearchPage: React.FC = () => {
             )}
 
             {/* Empty State */}
-            {!query && results.length === 0 && (
+            {!query && results.length === 0 && !loading && (
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
                         <div className="text-center py-12">
@@ -338,6 +339,17 @@ const SearchPage: React.FC = () => {
                             <p className="mt-1 text-sm text-gray-500">
                                 Enter a search query above to find products, batches, packs, or verification records.
                             </p>
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => {
+                                        setQuery('SAMPLE123');
+                                        performSearch('SAMPLE123');
+                                    }}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                >
+                                    Try Sample Search
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

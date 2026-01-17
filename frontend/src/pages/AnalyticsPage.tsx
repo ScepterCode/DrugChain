@@ -58,19 +58,55 @@ const AnalyticsPage: React.FC = () => {
             setLoading(true);
             console.log('Loading analytics data for time range:', timeRange);
             
-            // PERFORMANCE FIX: Make all API calls in parallel instead of sequential
-            const [locationsResult, volumeResult, trendsResult, geographicResult] = await Promise.allSettled([
-                analyticsService.getVerificationLocations(parseInt(timeRange)),
-                analyticsService.getVolumeData(parseInt(timeRange)),
+            // PERFORMANCE FIX: Load only essential data first, then load heavy data
+            const essentialPromises = [
                 analyticsService.getVerificationTrends(parseInt(timeRange)),
                 analyticsService.getGeographicDistribution()
-            ]);
+            ];
 
-            // Extract data from settled promises with error handling
-            const locations = locationsResult.status === 'fulfilled' ? locationsResult.value : [];
-            const volume = volumeResult.status === 'fulfilled' ? volumeResult.value : { volumeData: [], stateVolumeData: [] };
+            const [trendsResult, geographicResult] = await Promise.allSettled(essentialPromises);
+
+            // Set initial data quickly
             const trends = trendsResult.status === 'fulfilled' ? trendsResult.value : [];
             const geographic = geographicResult.status === 'fulfilled' ? geographicResult.value : [];
+
+            setAnalyticsData({
+                verificationLocations: [], // Load this later
+                volumeData: [], // Load this later
+                stateVolumeData: [],
+                verificationTrends: (trends || []).map(trend => ({
+                    date: trend.date,
+                    genuine: trend.verifications,
+                    counterfeit: 0,
+                    suspicious: 0
+                })),
+                geographicData: (geographic || []).map(geo => ({
+                    state: geo.state,
+                    verifications: geo.verifications,
+                    percentage: 0
+                }))
+            });
+
+            setLoading(false); // Show initial data immediately
+
+            // Load heavy data in background
+            const heavyPromises = [
+                analyticsService.getVerificationLocations(parseInt(timeRange)),
+                analyticsService.getVolumeData(parseInt(timeRange))
+            ];
+
+            const [locationsResult, volumeResult] = await Promise.allSettled(heavyPromises);
+
+            const locations = locationsResult.status === 'fulfilled' ? locationsResult.value : [];
+            const volume = volumeResult.status === 'fulfilled' ? volumeResult.value : { volumeData: [], stateVolumeData: [] };
+
+            // Update with heavy data
+            setAnalyticsData(prev => prev ? {
+                ...prev,
+                verificationLocations: locations || [],
+                volumeData: volume.volumeData || [],
+                stateVolumeData: volume.stateVolumeData || []
+            } : null);
 
             // Log any errors but don't fail the entire load
             if (locationsResult.status === 'rejected') {
@@ -85,22 +121,6 @@ const AnalyticsPage: React.FC = () => {
             if (geographicResult.status === 'rejected') {
                 console.warn('Failed to load geographic distribution:', geographicResult.reason);
             }
-
-            setAnalyticsData({
-                verificationLocations: locations || [],
-                volumeData: volume.volumeData || [],
-                stateVolumeData: volume.stateVolumeData || [],
-                verificationTrends: (trends || []).map(trend => ({
-                    date: trend.date,
-                    genuine: trend.verifications,
-                    counterfeit: 0,
-                    suspicious: 0
-                })),
-                geographicData: (geographic || []).map(geo => ({
-                    ...geo,
-                    percentage: 0
-                }))
-            });
             
             console.log('Analytics data loaded successfully');
         } catch (error) {
@@ -113,7 +133,6 @@ const AnalyticsPage: React.FC = () => {
                 verificationTrends: [],
                 geographicData: []
             });
-        } finally {
             setLoading(false);
         }
     };
