@@ -37,7 +37,7 @@ class StockMovement(BaseModel):
 @router.post("/receive-stock")
 async def receive_stock(
     request: ReceiveStockRequest,
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Receive stock by scanning carton IDs"""
@@ -86,7 +86,7 @@ async def receive_stock(
 @router.post("/transfer-out")
 async def transfer_out(
     request: TransferOutRequest,
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Transfer stock out to another organization"""
@@ -147,7 +147,7 @@ async def transfer_out(
 @router.get("/inventory")
 async def get_inventory(
     product_id: Optional[str] = None,
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Get current inventory for the organization"""
@@ -233,7 +233,7 @@ async def get_inventory(
 async def get_transfer_history(
     limit: int = 50,
     offset: int = 0,
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Get transfer history for the organization"""
@@ -278,7 +278,7 @@ async def get_transfer_history(
 @router.get("/low-stock-alerts")
 async def get_low_stock_alerts(
     threshold: int = 5,  # Cartons
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Get low stock alerts for products below threshold"""

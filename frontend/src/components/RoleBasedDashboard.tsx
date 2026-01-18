@@ -18,23 +18,23 @@ const RoleBasedDashboard: React.FC = () => {
             case 'AUTOMOTIVE_OEM':
             case 'COSMETICS_MANUFACTURER':
                 return <ManufacturerDashboard />;
-            
+
             case 'DISTRIBUTOR':
-            case 'PHARMACY':
+            case 'RETAILER':
                 return <DistributorDashboard />;
-            
+
             case 'RETAILER':
             case 'MARKETPLACE':
                 return <RetailerDashboard />;
-            
+
             case 'CONSUMER':
                 return <ConsumerDashboard />;
-            
+
             case 'REGULATOR':
             case 'SYSTEM_ADMIN':
             case 'ADMIN':
                 return <RegulatorDashboard />;
-            
+
             default:
                 return <ConsumerDashboard />; // Default to consumer view
         }

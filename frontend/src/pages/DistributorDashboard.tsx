@@ -70,7 +70,7 @@ const DistributorDashboard: React.FC = () => {
         );
     }
 
-    const isPharmacy = user?.role === 'PHARMACY';
+    const isRetailer = user?.role === 'RETAILER';
     const totalCartons = inventoryData?.summary?.total_cartons || 0;
     const totalPacks = inventoryData?.summary?.total_packs || 0;
     const lowStockCount = inventoryData?.inventory.filter((i: any) => i.status === 'LOW' || i.status === 'OUT_OF_STOCK').length || 0;
@@ -79,7 +79,7 @@ const DistributorDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             <div className="px-4 py-6 sm:px-0">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">
-                    {isPharmacy ? 'Pharmacy' : 'Distributor'} Dashboard
+                    {isRetailer ? 'Retailer' : 'Distributor'} Dashboard
                 </h1>
 
                 {/* Key Metrics */}
@@ -198,10 +198,10 @@ const DistributorDashboard: React.FC = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
                             <span className="mt-2 block text-sm font-medium text-gray-900">
-                                {isPharmacy ? 'Dispense' : 'Transfer Out'}
+                                {isRetailer ? 'Dispense' : 'Transfer Out'}
                             </span>
                             <span className="text-xs text-gray-500">
-                                {isPharmacy ? 'To customers' : 'To pharmacies'}
+                                {isRetailer ? 'To customers' : 'To pharmacies'}
                             </span>
                         </button>
                     </div>
@@ -242,8 +242,8 @@ const DistributorDashboard: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'NORMAL' ? 'bg-green-100 text-green-800' :
-                                                            item.status === 'LOW' ? 'bg-yellow-100 text-yellow-800' :
-                                                                'bg-red-100 text-red-800'
+                                                        item.status === 'LOW' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-red-100 text-red-800'
                                                         }`}>
                                                         {item.status.replace('_', ' ')}
                                                     </span>

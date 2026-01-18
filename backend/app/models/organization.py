@@ -10,7 +10,7 @@ import enum
 class OrganizationType(str, enum.Enum):
     MANUFACTURER = "MANUFACTURER"
     DISTRIBUTOR = "DISTRIBUTOR"
-    PHARMACY = "PHARMACY"
+    RETAILER = "RETAILER"
     REGULATOR = "REGULATOR"
 
 

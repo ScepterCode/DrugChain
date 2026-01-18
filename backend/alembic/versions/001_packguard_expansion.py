@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = '001_packguard_expansion'
-down_revision = None
+down_revision = '001'
 branch_labels = None
 depends_on = None
 

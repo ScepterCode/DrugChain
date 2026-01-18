@@ -175,7 +175,7 @@ async def get_regulator_dashboard(
 
 @router.get("/distributor/dashboard")
 async def get_distributor_dashboard(
-    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.PHARMACY.value])),
+    current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
     """Get distributor/pharmacy dashboard statistics with enhanced inventory data"""

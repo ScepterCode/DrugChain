@@ -90,7 +90,7 @@ async def list_products(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["MANUFACTURER", "DISTRIBUTOR", "PHARMACY", "REGULATOR"]))
+    current_user: User = Depends(require_role(["MANUFACTURER", "DISTRIBUTOR", "RETAILER", "REGULATOR"]))
 ):
     """
     List all products.

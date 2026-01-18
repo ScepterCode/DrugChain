@@ -7,7 +7,7 @@ interface User {
     user_id: string;
     email: string;
     full_name: string;
-    role: 'MANUFACTURER' | 'REGULATOR' | 'DISTRIBUTOR' | 'PHARMACY' | 'ADMIN';
+    role: 'MANUFACTURER' | 'REGULATOR' | 'DISTRIBUTOR' | 'RETAILER' | 'ADMIN';
     organization_id?: string;
     organization_name?: string;
     is_active: boolean;
@@ -35,7 +35,7 @@ const UserManagementPage: React.FC = () => {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data.data);
@@ -62,7 +62,7 @@ const UserManagementPage: React.FC = () => {
             });
 
             if (response.ok) {
-                setUsers(prev => prev.map(user => 
+                setUsers(prev => prev.map(user =>
                     user.user_id === userId ? { ...user, is_active: !isActive } : user
                 ));
             } else {
@@ -100,13 +100,13 @@ const UserManagementPage: React.FC = () => {
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (user.organization_name && user.organization_name.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (user.organization_name && user.organization_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
         const matchesRole = !roleFilter || user.role === roleFilter;
-        const matchesStatus = !statusFilter || 
-                            (statusFilter === 'active' && user.is_active) ||
-                            (statusFilter === 'inactive' && !user.is_active);
+        const matchesStatus = !statusFilter ||
+            (statusFilter === 'active' && user.is_active) ||
+            (statusFilter === 'inactive' && !user.is_active);
 
         return matchesSearch && matchesRole && matchesStatus;
     });
@@ -121,7 +121,7 @@ const UserManagementPage: React.FC = () => {
                 return 'bg-red-100 text-red-800';
             case 'DISTRIBUTOR':
                 return 'bg-green-100 text-green-800';
-            case 'PHARMACY':
+            case 'RETAILER':
                 return 'bg-yellow-100 text-yellow-800';
             default:
                 return 'bg-gray-100 text-gray-800';
@@ -195,7 +195,7 @@ const UserManagementPage: React.FC = () => {
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                             />
                         </div>
-                        
+
                         <div>
                             <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                                 Role
@@ -211,10 +211,10 @@ const UserManagementPage: React.FC = () => {
                                 <option value="MANUFACTURER">Manufacturer</option>
                                 <option value="REGULATOR">Regulator</option>
                                 <option value="DISTRIBUTOR">Distributor</option>
-                                <option value="PHARMACY">Pharmacy</option>
+                                <option value="RETAILER">Retailer</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label htmlFor="status" className="block text-sm font-medium text-gray-700">
                                 Status
@@ -230,7 +230,7 @@ const UserManagementPage: React.FC = () => {
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
-                        
+
                         <div className="flex items-end">
                             <button
                                 onClick={() => {
@@ -295,9 +295,8 @@ const UserManagementPage: React.FC = () => {
                                         {user.organization_name || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                        }`}>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}>
                                             {user.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
@@ -308,11 +307,10 @@ const UserManagementPage: React.FC = () => {
                                         <div className="flex space-x-2">
                                             <button
                                                 onClick={() => handleToggleUserStatus(user.user_id, user.is_active)}
-                                                className={`${
-                                                    user.is_active 
-                                                        ? 'text-red-600 hover:text-red-900' 
+                                                className={`${user.is_active
+                                                        ? 'text-red-600 hover:text-red-900'
                                                         : 'text-green-600 hover:text-green-900'
-                                                }`}
+                                                    }`}
                                             >
                                                 {user.is_active ? 'Deactivate' : 'Activate'}
                                             </button>
@@ -329,7 +327,7 @@ const UserManagementPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-                
+
                 {filteredUsers.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-500">No users found matching your criteria.</p>

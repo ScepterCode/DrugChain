@@ -22,18 +22,18 @@ const RegisterPage: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        
+
         // Update form data
         const updatedFormData = {
             ...formData,
             [name]: value,
         };
-        
+
         // Sync organization_type with role when role changes
         if (name === 'role') {
             updatedFormData.organization_type = value;
         }
-        
+
         setFormData(updatedFormData);
     };
 
@@ -162,7 +162,7 @@ const RegisterPage: React.FC = () => {
                             >
                                 <option value="MANUFACTURER">Manufacturer</option>
                                 <option value="DISTRIBUTOR">Distributor</option>
-                                <option value="PHARMACY">Pharmacy</option>
+                                <option value="RETAILER">Retailer</option>
                                 <option value="REGULATOR">Regulator</option>
                             </select>
                         </div>
