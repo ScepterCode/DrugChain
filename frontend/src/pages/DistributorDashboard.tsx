@@ -51,7 +51,7 @@ const DistributorDashboard: React.FC = () => {
 
             // Temporary: Using empty array until getTransferHistory is fully typed/exposed in service if needed
             // or just rely on the backend endpoint if it exists.
-            setRecentTransfers([]);
+            // setRecentTransfers([]);
 
         } catch (err) {
             console.error("Failed to load distributor dashboard data", err);
