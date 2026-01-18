@@ -49,11 +49,21 @@ class Manufacturer(Base):
 
     manufacturer_id = Column(UUID(as_uuid=True), ForeignKey("organizations.organization_id"), primary_key=True)
     manufacturer_code = Column(String(10), unique=True, nullable=False)
-    nafdac_license_number = Column(String(100))
+    
+    # Generic regulatory fields (industry-agnostic)
+    regulatory_license_number = Column(String(100))  # Generic license (replaces nafdac_license_number)
+    regulatory_body = Column(String(100))  # NAFDAC, FDA, CE, ISO, etc.
+    primary_certification_type = Column(String(50))  # GMP, ISO 9001, CE Mark, etc.
+    primary_certification_expiry = Column(Date)
+    
+    # Production info
     production_capacity = Column(Integer)
     specialization = Column(ARRAY(String))
-    gmp_certified = Column(Boolean, default=False)
-    gmp_certificate_expiry = Column(Date)
+    
+    # DEPRECATED: Legacy pharmaceutical fields (kept for backward compatibility)
+    nafdac_license_number = Column(String(100))  # DEPRECATED: Use regulatory_license_number
+    gmp_certified = Column(Boolean, default=False)  # DEPRECATED: Use primary_certification_type
+    gmp_certificate_expiry = Column(Date)  # DEPRECATED: Use primary_certification_expiry
 
     # Relationships
     organization = relationship("Organization", back_populates="manufacturer")

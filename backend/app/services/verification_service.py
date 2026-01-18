@@ -190,7 +190,7 @@ class VerificationService:
             return {
                 "success": False,
                 "verification_result": "SUSPICIOUS",
-                "message": "⚠️ SECURITY ALERT: This product has already been verified. If you purchased this product, it may be counterfeit. Contact NAFDAC immediately.",
+                "message": "⚠️ SECURITY ALERT: This product has already been verified. If you purchased this product, it may be counterfeit. Contact the relevant regulatory authority or consumer protection agency immediately.",
                 "blockchain_verified": False,
                 "data": {
                     "pack_id": pack_id,
@@ -258,7 +258,7 @@ class VerificationService:
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verification_count": pack.verification_count,
                 "first_verified_at": pack.first_verified_at.isoformat(),
-                "nafdac_reg": product.nafdac_registration_number if product else None
+                "regulatory_registration": product.regulatory_registration or product.nafdac_registration_number if product else None
             }
         }
     

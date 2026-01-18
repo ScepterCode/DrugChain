@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
@@ -12,18 +12,26 @@ class Product(Base):
     product_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     manufacturer_id = Column(UUID(as_uuid=True), ForeignKey("manufacturers.manufacturer_id"), nullable=False)
     
-    # Basic Product Info (existing fields only)
+    # Basic Product Info (industry-agnostic)
     product_code = Column(String(50), unique=True, nullable=False)
     product_name = Column(String(255), nullable=False)
     description = Column(Text)
     
-    # Legacy pharmaceutical fields (maintained for backward compatibility)
-    dosage = Column(String(100))
-    form = Column(String(50))  # Tablet, Syrup, Injection, etc.
-    active_ingredients = Column(ARRAY(String))
-    therapeutic_category = Column(String(100))
-    requires_prescription = Column(Boolean, default=True)
-    nafdac_registration_number = Column(String(100))
+    # Multi-industry support
+    industry_type = Column(String(50), default="Healthcare")  # Healthcare, Technology, Fashion, Automotive, etc.
+    industry_data = Column(JSONB, default={})  # Industry-specific attributes stored as JSON
+    
+    # Generic regulatory field (replaces nafdac_registration_number)
+    regulatory_registration = Column(String(100))
+    
+    # DEPRECATED: Legacy pharmaceutical fields (kept for backward compatibility)
+    # These should be migrated to industry_data for Healthcare products
+    dosage = Column(String(100))  # DEPRECATED: Use industry_data.dosage
+    form = Column(String(50))  # DEPRECATED: Use industry_data.form
+    active_ingredients = Column(ARRAY(String))  # DEPRECATED: Use industry_data.active_ingredients
+    therapeutic_category = Column(String(100))  # DEPRECATED: Use industry_data.therapeutic_category
+    requires_prescription = Column(Boolean, default=False)  # DEPRECATED: Use industry_data.requires_prescription
+    nafdac_registration_number = Column(String(100))  # DEPRECATED: Use regulatory_registration
     
     # Status and Metadata
     is_active = Column(Boolean, default=True)

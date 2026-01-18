@@ -12,7 +12,7 @@ class ProductBase(BaseModel):
     form: Optional[str] = None
     active_ingredients: Optional[List[str]] = None
     therapeutic_category: Optional[str] = None
-    requires_prescription: bool = True
+    requires_prescription: bool = False
     description: Optional[str] = None
     nafdac_registration_number: Optional[str] = None
 

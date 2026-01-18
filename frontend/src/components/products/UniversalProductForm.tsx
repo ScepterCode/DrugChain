@@ -25,18 +25,10 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
     warranty_period_months: '',
     risk_level: 'medium',
     verification_complexity: 'standard',
-    
-    // Legacy pharmaceutical fields
-    dosage: '',
-    form: '',
-    active_ingredients: [],
-    therapeutic_category: '',
-    requires_prescription: false,
-    nafdac_registration_number: '',
-    
-    // Industry-specific data
+
+    // Industry-specific data (pharmaceutical fields moved here)
     industry_data: {} as IndustrySpecificData,
-    
+
     // Attributes and certifications
     attributes: [],
     certifications: []
@@ -83,7 +75,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
       ...prev,
       [field]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -149,7 +141,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -174,9 +166,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
           type="text"
           value={formData.product_code}
           onChange={(e) => handleInputChange('product_code', e.target.value)}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${
-            errors.product_code ? 'border-red-300' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.product_code ? 'border-red-300' : ''
+            }`}
           placeholder="Enter unique product code"
         />
         {errors.product_code && (
@@ -192,9 +183,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
           type="text"
           value={formData.product_name}
           onChange={(e) => handleInputChange('product_name', e.target.value)}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${
-            errors.product_name ? 'border-red-300' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.product_name ? 'border-red-300' : ''
+            }`}
           placeholder="Enter product name"
         />
         {errors.product_name && (
@@ -224,9 +214,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
         <select
           value={formData.category_id}
           onChange={(e) => handleInputChange('category_id', e.target.value)}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${
-            errors.category_id ? 'border-red-300' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.category_id ? 'border-red-300' : ''
+            }`}
         >
           <option value="">Select a category</option>
           {categories.map(category => (
@@ -248,9 +237,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
           type="text"
           value={formData.brand_name}
           onChange={(e) => handleInputChange('brand_name', e.target.value)}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${
-            errors.brand_name ? 'border-red-300' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.brand_name ? 'border-red-300' : ''
+            }`}
           placeholder="Enter brand name"
         />
         {errors.brand_name && (
@@ -415,8 +403,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Dosage</label>
               <input
                 type="text"
-                value={formData.dosage}
-                onChange={(e) => handleInputChange('dosage', e.target.value)}
+                value={(industryData as any).dosage || ''}
+                onChange={(e) => handleIndustryDataChange('dosage', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., 500mg"
               />
@@ -424,8 +412,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
             <div>
               <label className="block text-sm font-medium text-gray-700">Form</label>
               <select
-                value={formData.form}
-                onChange={(e) => handleInputChange('form', e.target.value)}
+                value={(industryData as any).form || ''}
+                onChange={(e) => handleIndustryDataChange('form', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               >
                 <option value="">Select form</option>
@@ -441,8 +429,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Therapeutic Category</label>
               <input
                 type="text"
-                value={formData.therapeutic_category}
-                onChange={(e) => handleInputChange('therapeutic_category', e.target.value)}
+                value={(industryData as any).therapeutic_category || ''}
+                onChange={(e) => handleIndustryDataChange('therapeutic_category', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., Antibiotic"
               />
@@ -450,8 +438,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
             <div className="flex items-center">
               <input
                 type="checkbox"
-                checked={formData.requires_prescription}
-                onChange={(e) => handleInputChange('requires_prescription', e.target.checked)}
+                checked={(industryData as any).requires_prescription || false}
+                onChange={(e) => handleIndustryDataChange('requires_prescription', e.target.checked)}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-900">Requires Prescription</label>

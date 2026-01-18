@@ -72,9 +72,14 @@ const ManufacturerDashboard: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                     {industryType} Manufacturer Dashboard
                 </h1>
-                <p className="mt-2 text-gray-600">
-                    Manage your products, track verifications, and monitor supply chain security.
-                </p>
+                <div className="mt-2 flex items-center gap-2">
+                    <p className="text-gray-600">
+                        Manage your products, track verifications, and monitor supply chain security.
+                    </p>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {industryType}
+                    </span>
+                </div>
             </div>
 
             {/* Quick Stats */}
@@ -293,7 +298,7 @@ const ManufacturerDashboard: React.FC = () => {
                     <p className="text-sm text-gray-600 mb-4">
                         Track how your products move through the supply chain from production to end consumers.
                     </p>
-                    
+
                     {recentBatches.length === 0 ? (
                         <div className="text-center py-8">
                             <div className="text-gray-400 text-4xl mb-4">📦</div>
@@ -345,7 +350,7 @@ const ManufacturerDashboard: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
-                            
+
                             <div className="text-center pt-4">
                                 <Link
                                     to="/portal/batches"
