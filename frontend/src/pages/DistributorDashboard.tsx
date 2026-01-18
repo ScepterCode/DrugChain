@@ -1,45 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { analyticsService } from '../services/analyticsService';
+// import { analyticsService } from '../services/analyticsService'; // Removed mock service
+import { supplyChainService } from '../services/supplyChainService';
+import StockReceiveModal from '../components/distributor/StockReceiveModal';
+import StockTransferModal from '../components/distributor/StockTransferModal';
 
-interface DistributorStats {
-    total_inventory_cartons: number;
-    total_inventory_packs: number;
-    pending_transfers: number;
-    completed_transfers: number;
-    low_stock_alerts: number;
-    recent_transfers: {
-        id: string;
-        type: 'RECEIVED' | 'DISPATCHED';
-        product_name: string;
-        quantity: number;
-        from_to: string;
-        timestamp: string;
-    }[];
-    inventory_by_product: {
-        product_name: string;
-        cartons: number;
-        packs: number;
-        status: 'NORMAL' | 'LOW' | 'OUT_OF_STOCK';
-    }[];
+interface DashboardData {
+    inventory: any[];
+    summary: {
+        total_products: number;
+        total_cartons: number;
+        total_packs: number;
+    };
+}
+
+interface TransferRecord {
+    id: string;
+    type: string;
+    product_name: string;
+    quantity: number;
+    from_to: string;
+    timestamp: string;
 }
 
 const DistributorDashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
-    const [stats, setStats] = useState<DistributorStats | null>(null);
+    const [inventoryData, setInventoryData] = useState<DashboardData | null>(null);
+    const [recentTransfers, setRecentTransfers] = useState<TransferRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Modal states
+    const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
     useEffect(() => {
-        loadStats();
+        loadDashboardData();
     }, []);
 
-    const loadStats = async () => {
+    const loadDashboardData = async () => {
         try {
-            const data = await analyticsService.getDistributorStats();
-            setStats(data as DistributorStats);
+            setLoading(true);
+            // 1. Get Inventory
+            const invResponse = await supplyChainService.getInventory();
+            setInventoryData(invResponse);
+
+            // 2. Get Transfer History (mocked in backend service for now, but wired up)
+            // const transfersResponse = await supplyChainService.getTransferHistory(); 
+            // setRecentTransfers(transfersResponse.transfers);
+
+            // Temporary: Using empty array until getTransferHistory is fully typed/exposed in service if needed
+            // or just rely on the backend endpoint if it exists.
+            setRecentTransfers([]);
+
         } catch (err) {
-            console.error("Failed to load distributor stats", err);
+            console.error("Failed to load distributor dashboard data", err);
         } finally {
             setLoading(false);
         }
@@ -48,12 +63,17 @@ const DistributorDashboard: React.FC = () => {
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div className="text-center">Loading dashboard...</div>
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                </div>
             </div>
         );
     }
 
     const isPharmacy = user?.role === 'PHARMACY';
+    const totalCartons = inventoryData?.summary?.total_cartons || 0;
+    const totalPacks = inventoryData?.summary?.total_packs || 0;
+    const lowStockCount = inventoryData?.inventory.filter((i: any) => i.status === 'LOW' || i.status === 'OUT_OF_STOCK').length || 0;
 
     return (
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -64,7 +84,8 @@ const DistributorDashboard: React.FC = () => {
 
                 {/* Key Metrics */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                    {/* Inventory Card */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-blue-500">
                         <div className="p-5">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
@@ -75,14 +96,15 @@ const DistributorDashboard: React.FC = () => {
                                 <div className="ml-5 w-0 flex-1">
                                     <dl>
                                         <dt className="text-sm font-medium text-gray-500 truncate">Inventory (Cartons)</dt>
-                                        <dd className="text-lg font-medium text-gray-900">{stats?.total_inventory_cartons?.toLocaleString() || 0}</dd>
+                                        <dd className="text-2xl font-semibold text-gray-900">{totalCartons.toLocaleString()}</dd>
                                     </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                    {/* Packs Card */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-green-500">
                         <div className="p-5">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
@@ -93,14 +115,15 @@ const DistributorDashboard: React.FC = () => {
                                 <div className="ml-5 w-0 flex-1">
                                     <dl>
                                         <dt className="text-sm font-medium text-gray-500 truncate">Total Packs</dt>
-                                        <dd className="text-lg font-medium text-gray-900">{stats?.total_inventory_packs?.toLocaleString() || 0}</dd>
+                                        <dd className="text-2xl font-semibold text-gray-900">{totalPacks.toLocaleString()}</dd>
                                     </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                    {/* Pending Transfers Card (Placeholder for now) */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-yellow-500">
                         <div className="p-5">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
@@ -110,15 +133,16 @@ const DistributorDashboard: React.FC = () => {
                                 </div>
                                 <div className="ml-5 w-0 flex-1">
                                     <dl>
-                                        <dt className="text-sm font-medium text-gray-500 truncate">Pending Transfers</dt>
-                                        <dd className="text-lg font-medium text-gray-900">{stats?.pending_transfers || 0}</dd>
+                                        <dt className="text-sm font-medium text-gray-500 truncate">Pending Actions</dt>
+                                        <dd className="text-2xl font-semibold text-gray-900">0</dd>
                                     </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                    {/* Low Stock Alerts */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-red-500">
                         <div className="p-5">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
@@ -129,11 +153,57 @@ const DistributorDashboard: React.FC = () => {
                                 <div className="ml-5 w-0 flex-1">
                                     <dl>
                                         <dt className="text-sm font-medium text-gray-500 truncate">Low Stock Alerts</dt>
-                                        <dd className="text-lg font-medium text-gray-900">{stats?.low_stock_alerts || 0}</dd>
+                                        <dd className="text-2xl font-semibold text-gray-900">{lowStockCount}</dd>
                                     </dl>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Quick Actions (Functional Now!) */}
+                <div className="mt-8 mb-8">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Operations Center</h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        {/* Verify */}
+                        <Link
+                            to="/portal/verify"
+                            className="relative block w-full border border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 hover:shadow-md transition-all bg-white"
+                        >
+                            <svg className="mx-auto h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="mt-2 block text-sm font-medium text-gray-900">Verify Product</span>
+                            <span className="text-xs text-gray-500">Scan & verify authenticity</span>
+                        </Link>
+
+                        {/* Receive Stock */}
+                        <button
+                            onClick={() => setIsReceiveModalOpen(true)}
+                            className="relative block w-full border border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 hover:shadow-md transition-all bg-white group"
+                        >
+                            <svg className="mx-auto h-8 w-8 text-green-500 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="mt-2 block text-sm font-medium text-gray-900">Receive Stock</span>
+                            <span className="text-xs text-gray-500">Scan incoming cartons</span>
+                        </button>
+
+                        {/* Transfer Out */}
+                        <button
+                            onClick={() => setIsTransferModalOpen(true)}
+                            className="relative block w-full border border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 hover:shadow-md transition-all bg-white group"
+                        >
+                            <svg className="mx-auto h-8 w-8 text-blue-500 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span className="mt-2 block text-sm font-medium text-gray-900">
+                                {isPharmacy ? 'Dispense' : 'Transfer Out'}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                                {isPharmacy ? 'To customers' : 'To pharmacies'}
+                            </span>
+                        </button>
                     </div>
                 </div>
 
@@ -143,22 +213,26 @@ const DistributorDashboard: React.FC = () => {
                         <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                             Current Inventory
                         </h3>
-                        {stats?.inventory_by_product && stats.inventory_by_product.length > 0 ? (
-                            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                                <table className="min-w-full divide-y divide-gray-300">
+                        {inventoryData?.inventory && inventoryData.inventory.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cartons</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Packs</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {stats.inventory_by_product.map((item, idx) => (
-                                            <tr key={idx}>
+                                        {inventoryData.inventory.map((item: any, idx: number) => (
+                                            <tr key={idx} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {item.product_name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {item.product_code}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {item.cartons.toLocaleString()}
@@ -180,141 +254,24 @@ const DistributorDashboard: React.FC = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500">No inventory data available</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Recent Transfers */}
-                <div className="bg-white shadow rounded-lg mb-8">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                            Recent Transfers
-                        </h3>
-                        {stats?.recent_transfers && stats.recent_transfers.length > 0 ? (
-                            <div className="flow-root">
-                                <ul className="-mb-8">
-                                    {stats.recent_transfers.map((transfer, idx) => (
-                                        <li key={transfer.id}>
-                                            <div className="relative pb-8">
-                                                {idx !== stats.recent_transfers.length - 1 && (
-                                                    <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                                                )}
-                                                <div className="relative flex space-x-3">
-                                                    <div>
-                                                        <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${transfer.type === 'RECEIVED' ? 'bg-green-500' : 'bg-blue-500'
-                                                            }`}>
-                                                            <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                                {transfer.type === 'RECEIVED' ? (
-                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                ) : (
-                                                                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                                                                )}
-                                                            </svg>
-                                                        </span>
-                                                    </div>
-                                                    <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p className="text-sm text-gray-500">
-                                                                <span className="font-medium text-gray-900">{transfer.type}</span>{' '}
-                                                                {transfer.quantity} cartons of{' '}
-                                                                <span className="font-medium text-gray-900">{transfer.product_name}</span>
-                                                            </p>
-                                                            <p className="text-sm text-gray-500">
-                                                                {transfer.type === 'RECEIVED' ? 'From' : 'To'}: {transfer.from_to}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            {new Date(transfer.timestamp).toLocaleString()}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="text-center py-10 bg-gray-50 rounded-lg">
+                                <p className="text-gray-500">Your inventory is empty. Receive stock to get started.</p>
                             </div>
-                        ) : (
-                            <p className="text-sm text-gray-500">No recent transfers</p>
                         )}
                     </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="mt-8">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Link
-                            to="/portal/verify"
-                            className="relative block w-full border-2 border-primary-300 border-dashed rounded-lg p-6 text-center hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                        >
-                            <svg className="mx-auto h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="mt-2 block text-sm font-medium text-gray-900">Verify Product</span>
-                            <span className="text-xs text-primary-600">Scan & verify authenticity</span>
-                        </Link>
-
-                        <button
-                            onClick={() => alert('Stock receiving functionality will be implemented in Phase 2')}
-                            className="relative block w-full border-2 border-green-300 border-dashed rounded-lg p-6 text-center hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        >
-                            <svg className="mx-auto h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span className="mt-2 block text-sm font-medium text-gray-900">Receive Stock</span>
-                            <span className="text-xs text-green-600">Scan incoming cartons</span>
-                        </button>
-
-                        <button
-                            onClick={() => alert('Transfer functionality will be implemented in Phase 2')}
-                            className="relative block w-full border-2 border-blue-300 border-dashed rounded-lg p-6 text-center hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            <svg className="mx-auto h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            <span className="mt-2 block text-sm font-medium text-gray-900">
-                                {isPharmacy ? 'Dispense' : 'Transfer Out'}
-                            </span>
-                            <span className="text-xs text-blue-600">
-                                {isPharmacy ? 'To customers' : 'To pharmacies'}
-                            </span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                const csvContent = [
-                                    ['Date', 'Inventory Cartons', 'Inventory Packs', 'Pending Transfers', 'Low Stock Alerts'],
-                                    [new Date().toISOString().split('T')[0], stats?.total_inventory_cartons || 0, stats?.total_inventory_packs || 0, stats?.pending_transfers || 0, stats?.low_stock_alerts || 0]
-                                ].map(row => row.join(',')).join('\n');
-
-                                const blob = new Blob([csvContent], { type: 'text/csv' });
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `${isPharmacy ? 'pharmacy' : 'distributor'}_report_${new Date().toISOString().split('T')[0]}.csv`;
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                            }}
-                            className="relative block w-full border-2 border-purple-300 border-dashed rounded-lg p-6 text-center hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                        >
-                            <svg className="mx-auto h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span className="mt-2 block text-sm font-medium text-gray-900">Export Reports</span>
-                            <span className="text-xs text-purple-600">Inventory & transfers</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Coming Soon Notice */}
-                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h3 className="text-lg font-medium text-blue-900">Phase 2 Features Coming Soon</h3>
-                    <p className="mt-2 text-sm text-blue-700">
-                        Full supply chain tracking, transfer management, and inventory optimization features
-                        will be available in the next phase of development.
-                    </p>
-                </div>
+                {/* Modals */}
+                <StockReceiveModal
+                    isOpen={isReceiveModalOpen}
+                    onClose={() => setIsReceiveModalOpen(false)}
+                    onSuccess={() => loadDashboardData()}
+                />
+                <StockTransferModal
+                    isOpen={isTransferModalOpen}
+                    onClose={() => setIsTransferModalOpen(false)}
+                    onSuccess={() => loadDashboardData()}
+                />
             </div>
         </div>
     );
