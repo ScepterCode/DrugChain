@@ -36,7 +36,8 @@ async def log_requests(request: Request, call_next):
 
 # Get CORS origins from settings (which reads from .env)
 CORS_ORIGINS = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [
-    "https://drug-chain.vercel.app",  # Production frontend
+    "https://pack-guard.vercel.app",  # Production frontend (NEW)
+    "https://drug-chain.vercel.app",  # Production frontend (OLD)
     "http://localhost:3000",         # Local dev (React)
     "http://localhost:5173",         # Local dev (Vite)
     "http://localhost:5174",         # Local dev (Vite alt)
