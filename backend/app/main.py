@@ -34,8 +34,8 @@ async def log_requests(request: Request, call_next):
         logger.error(f"Request failed: {str(e)} - Time: {process_time:.4f}s")
         raise
 
-# Define CORS origins explicitly
-CORS_ORIGINS = [
+# Get CORS origins from settings (which reads from .env)
+CORS_ORIGINS = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [
     "https://drug-chain.vercel.app",  # Production frontend
     "http://localhost:3000",         # Local dev (React)
     "http://localhost:5173",         # Local dev (Vite)
@@ -46,13 +46,14 @@ CORS_ORIGINS = [
 # Log CORS configuration
 logger.info(f"CORS Origins configured: {CORS_ORIGINS}")
 
-# CORS middleware
+# CORS middleware with more permissive settings for production debugging
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include API router

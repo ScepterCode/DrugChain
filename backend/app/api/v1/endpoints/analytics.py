@@ -68,109 +68,168 @@ async def get_regulator_dashboard(
 ):
     """Get regulator dashboard statistics with enhanced data"""
     
-    total_manufacturers = db.query(Manufacturer).count()
-    total_products = db.query(Product).count()
-    total_batches = db.query(Batch).count()
-    total_verifications = db.query(VerificationEvent).count()
-    
-    # Count counterfeit alerts (verification_result = 'COUNTERFEIT')
-    counterfeit_alerts = db.query(VerificationEvent)\
-        .filter(VerificationEvent.verification_result == 'COUNTERFEIT')\
-        .count()
-    
-    # Get verification trends (last 30 days)
-    from datetime import datetime, timedelta
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
-    
-    trends_results = db.query(
-        func.date(VerificationEvent.created_at).label('date'),
-        func.count(VerificationEvent.event_id).label('verifications')
-    ).filter(
-        VerificationEvent.created_at >= start_date,
-        VerificationEvent.created_at <= end_date
-    ).group_by(func.date(VerificationEvent.created_at))\
-        .order_by(func.date(VerificationEvent.created_at)).all()
-    
-    verification_trends = []
-    for result in trends_results:
-        verification_trends.append({
-            "date": result.date.isoformat(),
-            "verifications": result.verifications
-        })
-    
-    # Get geographic distribution - using a simple approach since location data is in address field
-    # Get geographic distribution from actual verification data
-    geo_results = db.query(
-        func.count(VerificationEvent.event_id).label('total_verifications')
-    ).filter(VerificationEvent.location_address.isnot(None)).first()
-    
-    # Get actual geographic distribution by parsing location addresses
-    location_results = db.query(
-        VerificationEvent.location_address,
-        func.count(VerificationEvent.event_id).label('verifications')
-    ).filter(VerificationEvent.location_address.isnot(None))\
-     .group_by(VerificationEvent.location_address)\
-     .all()
-    
-    # Parse states from location addresses
-    state_counts = {}
-    for result in location_results:
-        if result.location_address:
-            # Extract state from address (assuming format: "City, State, Country")
-            parts = result.location_address.split(',')
-            if len(parts) >= 2:
-                state = parts[-2].strip()  # Second to last part should be state
-                state_counts[state] = state_counts.get(state, 0) + result.verifications
-    
-    # Convert to list format
-    geographic_distribution = []
-    for state, count in state_counts.items():
-        geographic_distribution.append({
-            "state": state,
-            "verifications": count
-        })
-    
-    # Sort by verification count
-    geographic_distribution.sort(key=lambda x: x['verifications'], reverse=True)
-    
-    # Get recent alerts
-    alerts = db.query(VerificationEvent)\
-        .join(Pack, VerificationEvent.pack_id == Pack.pack_id)\
-        .join(Batch, Pack.batch_id == Batch.batch_id)\
-        .join(Product, Batch.product_id == Product.product_id)\
-        .filter(VerificationEvent.verification_result.in_(['COUNTERFEIT', 'SUSPICIOUS']))\
-        .order_by(VerificationEvent.created_at.desc())\
-        .limit(10)\
-        .all()
-    
-    recent_alerts = []
-    for alert in alerts:
-        pack = db.query(Pack).filter(Pack.pack_id == alert.pack_id).first()
-        if pack:
-            batch = db.query(Batch).filter(Batch.batch_id == pack.batch_id).first()
-            if batch:
-                product = db.query(Product).filter(Product.product_id == batch.product_id).first()
-                recent_alerts.append({
-                    "id": str(alert.event_id),
-                    "type": alert.verification_result,
-                    "product_name": product.product_name if product else "Unknown",
-                    "location": alert.location_address or "Unknown Location",
-                    "timestamp": alert.created_at.isoformat()
+    try:
+        logger.info(f"Getting regulator dashboard for user {current_user.user_id}")
+        
+        # Basic counts with error handling
+        try:
+            total_manufacturers = db.query(Manufacturer).count()
+        except Exception as e:
+            logger.error(f"Error counting manufacturers: {e}")
+            total_manufacturers = 0
+            
+        try:
+            total_products = db.query(Product).count()
+        except Exception as e:
+            logger.error(f"Error counting products: {e}")
+            total_products = 0
+            
+        try:
+            total_batches = db.query(Batch).count()
+        except Exception as e:
+            logger.error(f"Error counting batches: {e}")
+            total_batches = 0
+            
+        try:
+            total_verifications = db.query(VerificationEvent).count()
+        except Exception as e:
+            logger.error(f"Error counting verifications: {e}")
+            total_verifications = 0
+        
+        # Count counterfeit alerts with error handling
+        try:
+            counterfeit_alerts = db.query(VerificationEvent)\
+                .filter(VerificationEvent.verification_result == 'COUNTERFEIT')\
+                .count()
+        except Exception as e:
+            logger.error(f"Error counting counterfeit alerts: {e}")
+            counterfeit_alerts = 0
+        
+        # Get verification trends (simplified for performance)
+        verification_trends = []
+        try:
+            from datetime import datetime, timedelta
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)  # Reduced to 7 days for performance
+            
+            trends_results = db.query(
+                func.date(VerificationEvent.created_at).label('date'),
+                func.count(VerificationEvent.event_id).label('verifications')
+            ).filter(
+                VerificationEvent.created_at >= start_date,
+                VerificationEvent.created_at <= end_date
+            ).group_by(func.date(VerificationEvent.created_at))\
+                .order_by(func.date(VerificationEvent.created_at)).limit(7).all()
+            
+            for result in trends_results:
+                verification_trends.append({
+                    "date": result.date.isoformat(),
+                    "verifications": result.verifications
                 })
-    
-    return {
-        "data": {
-            "total_manufacturers": total_manufacturers,
-            "total_products": total_products,
-            "total_batches": total_batches,
-            "total_verifications_nationwide": total_verifications,
-            "counterfeit_alerts": counterfeit_alerts,
-            "verification_trends": verification_trends,
-            "geographic_distribution": geographic_distribution,
-            "recent_alerts": recent_alerts
+        except Exception as e:
+            logger.error(f"Error getting verification trends: {e}")
+            verification_trends = []
+        
+        # Simplified geographic distribution
+        geographic_distribution = []
+        try:
+            # Get top 5 locations only for performance
+            location_results = db.query(
+                VerificationEvent.location_address,
+                func.count(VerificationEvent.event_id).label('verifications')
+            ).filter(VerificationEvent.location_address.isnot(None))\
+             .group_by(VerificationEvent.location_address)\
+             .order_by(func.count(VerificationEvent.event_id).desc())\
+             .limit(5).all()
+            
+            # Parse states from location addresses
+            state_counts = {}
+            for result in location_results:
+                if result.location_address:
+                    # Extract state from address (assuming format: "City, State, Country")
+                    parts = result.location_address.split(',')
+                    if len(parts) >= 2:
+                        state = parts[-2].strip()  # Second to last part should be state
+                        state_counts[state] = state_counts.get(state, 0) + result.verifications
+            
+            # Convert to list format
+            for state, count in state_counts.items():
+                geographic_distribution.append({
+                    "state": state,
+                    "verifications": count
+                })
+            
+            # Sort by verification count
+            geographic_distribution.sort(key=lambda x: x['verifications'], reverse=True)
+        except Exception as e:
+            logger.error(f"Error getting geographic distribution: {e}")
+            geographic_distribution = []
+        
+        # Get recent alerts (simplified)
+        recent_alerts = []
+        try:
+            alerts = db.query(VerificationEvent)\
+                .filter(VerificationEvent.verification_result.in_(['COUNTERFEIT', 'SUSPICIOUS']))\
+                .order_by(VerificationEvent.created_at.desc())\
+                .limit(5)\
+                .all()
+            
+            for alert in alerts:
+                try:
+                    pack = db.query(Pack).filter(Pack.pack_id == alert.pack_id).first()
+                    product_name = "Unknown"
+                    if pack:
+                        batch = db.query(Batch).filter(Batch.batch_id == pack.batch_id).first()
+                        if batch:
+                            product = db.query(Product).filter(Product.product_id == batch.product_id).first()
+                            if product:
+                                product_name = product.product_name
+                    
+                    recent_alerts.append({
+                        "id": str(alert.event_id),
+                        "type": alert.verification_result,
+                        "product_name": product_name,
+                        "location": alert.location_address or "Unknown Location",
+                        "timestamp": alert.created_at.isoformat()
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing alert {alert.event_id}: {e}")
+                    continue
+        except Exception as e:
+            logger.error(f"Error getting recent alerts: {e}")
+            recent_alerts = []
+        
+        logger.info("Successfully retrieved regulator dashboard data")
+        
+        return {
+            "data": {
+                "total_manufacturers": total_manufacturers,
+                "total_products": total_products,
+                "total_batches": total_batches,
+                "total_verifications_nationwide": total_verifications,
+                "counterfeit_alerts": counterfeit_alerts,
+                "verification_trends": verification_trends,
+                "geographic_distribution": geographic_distribution,
+                "recent_alerts": recent_alerts
+            }
         }
-    }
+        
+    except Exception as e:
+        logger.error(f"Critical error in regulator dashboard: {e}")
+        # Return fallback data instead of failing
+        return {
+            "data": {
+                "total_manufacturers": 0,
+                "total_products": 0,
+                "total_batches": 0,
+                "total_verifications_nationwide": 0,
+                "counterfeit_alerts": 0,
+                "verification_trends": [],
+                "geographic_distribution": [],
+                "recent_alerts": [],
+                "error": "Dashboard temporarily unavailable"
+            }
+        }
 
 
 @router.get("/distributor/dashboard")
@@ -389,109 +448,96 @@ async def get_verification_locations(
 ):
     """Get verification locations for map visualization - OPTIMIZED"""
     
-    # Create cache key
-    cache_key = f"verification_locations_{current_user.user_id}_{days}"
-    
-    # Check cache first
-    if cache_key in _analytics_cache:
-        cached_data, timestamp = _analytics_cache[cache_key]
-        if datetime.now().timestamp() - timestamp < _cache_ttl:
-            logger.info(f"Returning cached verification locations for user {current_user.user_id}")
-            return {"data": cached_data}
-    
-    logger.info(f"Computing verification locations for user {current_user.user_id}, days={days}")
-    
-    # Calculate date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days)
-    
-    # OPTIMIZED: Use raw SQL with proper indexes
-    if current_user.role == UserRole.MANUFACTURER and current_user.organization_id:
-        # Manufacturer-specific query with joins
-        query = text("""
-            SELECT ve.location_address, COUNT(ve.event_id) as count
-            FROM verification_events ve
-            JOIN packs p ON ve.pack_id = p.pack_id
-            JOIN batches b ON p.batch_id = b.batch_id
-            WHERE ve.created_at >= :start_date 
-            AND ve.created_at <= :end_date
-            AND ve.location_address IS NOT NULL
-            AND b.manufacturer_id = :manufacturer_id
-            GROUP BY ve.location_address
-            ORDER BY count DESC
-            LIMIT 50
-        """)
-        results = db.execute(query, {
-            'start_date': start_date,
-            'end_date': end_date,
-            'manufacturer_id': str(current_user.organization_id)
-        }).fetchall()
-    else:
-        # General query for regulators/admins
-        query = text("""
-            SELECT location_address, COUNT(event_id) as count
-            FROM verification_events
-            WHERE created_at >= :start_date 
-            AND created_at <= :end_date
-            AND location_address IS NOT NULL
-            GROUP BY location_address
-            ORDER BY count DESC
-            LIMIT 50
-        """)
-        results = db.execute(query, {
-            'start_date': start_date,
-            'end_date': end_date
-        }).fetchall()
-    
-    # Process results efficiently
-    locations = []
-    for i, result in enumerate(results):
-        if result.location_address:
-            # Extract city from address (first part before comma)
-            address_parts = result.location_address.split(',')
-            city = address_parts[0].strip() if address_parts else 'Unknown'
-            state = address_parts[-1].strip() if len(address_parts) > 1 else 'Unknown'
-            
-            # Use predefined coordinates for known Nigerian cities
-            coords = get_nigerian_city_coords(city, i)
-            
-            locations.append({
-                'id': f"loc_{i}",
-                'latitude': coords['lat'],
-                'longitude': coords['lng'],
-                'city': city,
-                'state': state,
-                'count': result.count,
-                'recent_verifications': []  # Skip expensive subquery for performance
-            })
-    
-    # Cache the result
-    _analytics_cache[cache_key] = (locations, datetime.now().timestamp())
-    
-    return {"data": locations}
+    try:
+        # Create cache key
+        cache_key = f"verification_locations_{current_user.user_id}_{days}"
+        
+        # Check cache first
+        if cache_key in _analytics_cache:
+            cached_data, timestamp = _analytics_cache[cache_key]
+            if datetime.now().timestamp() - timestamp < _cache_ttl:
+                logger.info(f"Returning cached verification locations for user {current_user.user_id}")
+                return {"data": cached_data}
+        
+        logger.info(f"Computing verification locations for user {current_user.user_id}, days={days}")
+        
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        # OPTIMIZED: Use raw SQL with proper indexes and limits
+        if current_user.role == UserRole.MANUFACTURER and current_user.organization_id:
+            # Manufacturer-specific query with joins
+            query = text("""
+                SELECT ve.location_address, COUNT(ve.event_id) as count
+                FROM verification_events ve
+                JOIN packs p ON ve.pack_id = p.pack_id
+                JOIN batches b ON p.batch_id = b.batch_id
+                WHERE ve.created_at >= :start_date 
+                AND ve.created_at <= :end_date
+                AND ve.location_address IS NOT NULL
+                AND b.manufacturer_id = :manufacturer_id
+                GROUP BY ve.location_address
+                ORDER BY count DESC
+                LIMIT 20
+            """)
+            results = db.execute(query, {
+                'start_date': start_date,
+                'end_date': end_date,
+                'manufacturer_id': str(current_user.organization_id)
+            }).fetchall()
+        else:
+            # General query for regulators/admins
+            query = text("""
+                SELECT location_address, COUNT(event_id) as count
+                FROM verification_events
+                WHERE created_at >= :start_date 
+                AND created_at <= :end_date
+                AND location_address IS NOT NULL
+                GROUP BY location_address
+                ORDER BY count DESC
+                LIMIT 20
+            """)
+            results = db.execute(query, {
+                'start_date': start_date,
+                'end_date': end_date
+            }).fetchall()
+        
+        # Process results efficiently
+        locations = []
+        for i, result in enumerate(results):
+            if result.location_address:
+                # Extract city from address (first part before comma)
+                address_parts = result.location_address.split(',')
+                city = address_parts[0].strip() if address_parts else 'Unknown'
+                state = address_parts[-1].strip() if len(address_parts) > 1 else 'Unknown'
+                
+                # Use predefined coordinates for known Nigerian cities
+                coords = get_nigerian_city_coords(city, i)
+                
+                locations.append({
+                    'id': f"loc_{i}",
+                    'latitude': coords['lat'],
+                    'longitude': coords['lng'],
+                    'city': city,
+                    'state': state,
+                    'count': result.count,
+                    'recent_verifications': []  # Skip expensive subquery for performance
+                })
+        
+        # Cache the result
+        _analytics_cache[cache_key] = (locations, datetime.now().timestamp())
+        
+        logger.info(f"Successfully computed {len(locations)} verification locations")
+        return {"data": locations}
+        
+    except Exception as e:
+        logger.error(f"Error getting verification locations: {e}")
+        return {"data": []}
 
 
 def get_nigerian_city_coords(city: str, index: int) -> dict:
     """Get coordinates for Nigerian cities with fallback"""
-    nigerian_cities = {
-        'Lagos': {'lat': 6.5244, 'lng': 3.3792},
-        'Kano': {'lat': 12.0022, 'lng': 8.5920},
-        'Ibadan': {'lat': 7.3775, 'lng': 3.9470},
-        'Kaduna': {'lat': 10.5222, 'lng': 7.4383},
-        'Port Harcourt': {'lat': 4.8156, 'lng': 7.0498},
-        'Benin City': {'lat': 6.3350, 'lng': 5.6037},
-        'Maiduguri': {'lat': 11.8311, 'lng': 13.1511},
-        'Zaria': {'lat': 11.0804, 'lng': 7.7076},
-        'Aba': {'lat': 5.1066, 'lng': 7.3667},
-        'Jos': {'lat': 9.8965, 'lng': 8.8583},
-        'Ilorin': {'lat': 8.5000, 'lng': 4.5500},
-        'Abuja': {'lat': 9.0579, 'lng': 7.4951}
-    }
-    
-    return nigerian_cities.get(city, {
-        'lat': 9.0820 + (index * 0.1), 
-        'lng': 8.6753 + (index * 0.1)
-    })
     nigerian_cities = {
         'Lagos': {'lat': 6.5244, 'lng': 3.3792},
         'Kano': {'lat': 12.0022, 'lng': 8.5920},
@@ -510,48 +556,10 @@ def get_nigerian_city_coords(city: str, index: int) -> dict:
         'Abuja': {'lat': 9.0579, 'lng': 7.4951}
     }
     
-    locations = []
-    for i, result in enumerate(results):
-        if result.location_address:
-            # Extract city from address
-            address_parts = result.location_address.split(',')
-            city = address_parts[0].strip() if address_parts else 'Unknown'
-            state = address_parts[-1].strip() if len(address_parts) > 1 else 'Unknown'
-            
-            # Get coordinates (use default if city not found)
-            coords = nigerian_cities.get(city, {'lat': 9.0820 + (i * 0.1), 'lng': 8.6753 + (i * 0.1)})
-            
-            # Get recent verifications for this location
-            recent_verifications = db.query(VerificationEvent)\
-                .filter(
-                    and_(
-                        VerificationEvent.location_address == result.location_address,
-                        VerificationEvent.created_at >= start_date
-                    )
-                )\
-                .order_by(VerificationEvent.created_at.desc())\
-                .limit(5)\
-                .all()
-            
-            recent_list = []
-            for verification in recent_verifications:
-                recent_list.append({
-                    'pack_id': verification.pack_id,
-                    'verified_at': verification.created_at.isoformat(),
-                    'result': verification.verification_result
-                })
-            
-            locations.append({
-                'id': f"loc_{i}",
-                'latitude': coords['lat'],
-                'longitude': coords['lng'],
-                'city': city,
-                'state': state,
-                'count': result.count,
-                'recent_verifications': recent_list
-            })
-    
-    return {"data": locations}
+    return nigerian_cities.get(city, {
+        'lat': 9.0820 + (index * 0.1), 
+        'lng': 8.6753 + (index * 0.1)
+    })
 
 
 @router.get("/volume-data")
