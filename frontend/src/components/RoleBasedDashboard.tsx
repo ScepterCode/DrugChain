@@ -20,7 +20,6 @@ const RoleBasedDashboard: React.FC = () => {
                 return <ManufacturerDashboard />;
 
             case 'DISTRIBUTOR':
-            case 'RETAILER':
                 return <DistributorDashboard />;
 
             case 'RETAILER':
