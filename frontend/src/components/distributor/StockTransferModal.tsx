@@ -10,7 +10,7 @@ interface StockTransferModalProps {
 const StockTransferModal: React.FC<StockTransferModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [cartonIds, setCartonIds] = useState('');
     const [recipientId, setRecipientId] = useState('');
-    const [recipients, setRecipients] = useState<any[]>([]); // To be populated from API
+    // const [recipients, setRecipients] = useState<any[]>([]); // To be populated from API in future
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);

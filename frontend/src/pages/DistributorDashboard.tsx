@@ -27,7 +27,7 @@ interface TransferRecord {
 const DistributorDashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
     const [inventoryData, setInventoryData] = useState<DashboardData | null>(null);
-    const [recentTransfers, setRecentTransfers] = useState<TransferRecord[]>([]);
+    // const [recentTransfers, setRecentTransfers] = useState<TransferRecord[]>([]); // For future use
     const [loading, setLoading] = useState(true);
 
     // Modal states
