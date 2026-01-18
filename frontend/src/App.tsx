@@ -16,7 +16,7 @@ import UserManagementPage from './pages/UserManagementPage';
 import VerificationPage from './pages/VerificationPage';
 import AboutPage from './pages/AboutPage';
 import HowToUsePage from './pages/HowToUsePage';
-import DistributorDashboard from './pages/DistributorDashboard';
+import SupplyChainDashboard from './pages/SupplyChainDashboard';
 import SearchPage from './pages/SearchPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFoundPage from './pages/NotFoundPage';
@@ -46,7 +46,7 @@ function App() {
                             <Route path="batches/:batchId" element={<BatchDetailsPage />} />
                             <Route path="analytics" element={<AnalyticsPage />} />
                             <Route path="users" element={<UserManagementPage />} />
-                            <Route path="distributor" element={<DistributorDashboard />} />
+                            <Route path="distributor" element={<SupplyChainDashboard />} />
                             <Route path="verify" element={<VerificationPage />} />
                             <Route path="search" element={<SearchPage />} />
                         </Route>

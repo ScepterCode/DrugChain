@@ -58,6 +58,12 @@ export const supplyChainService = {
         return response.data.data;
     },
 
+    // Get manufacturer batch summaries (alias for compatibility)
+    getManufacturerBatchSummaries: async () => {
+        const response = await api.get('/analytics/supply-chain/manufacturer-batches');
+        return response.data;
+    },
+
     // Receive stock (for distributors/pharmacies)
     receiveStock: async (cartonIds: string[], receivedFrom: string, notes?: string) => {
         const response = await api.post('/supply-chain/receive-stock', {
