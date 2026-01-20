@@ -8,12 +8,19 @@ from uuid import UUID
 class ProductBase(BaseModel):
     product_code: str
     product_name: str
+    description: Optional[str] = None
+    
+    # Multi-industry support
+    industry_type: Optional[str] = "Healthcare"
+    industry_data: Optional[dict] = {}
+    regulatory_registration: Optional[str] = None
+    
+    # Legacy pharmaceutical fields (deprecated but kept for backward compatibility)
     dosage: Optional[str] = None
     form: Optional[str] = None
     active_ingredients: Optional[List[str]] = None
     therapeutic_category: Optional[str] = None
     requires_prescription: bool = False
-    description: Optional[str] = None
     nafdac_registration_number: Optional[str] = None
 
 
@@ -26,6 +33,7 @@ class ProductResponse(ProductBase):
     manufacturer_id: UUID
     is_active: bool
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
