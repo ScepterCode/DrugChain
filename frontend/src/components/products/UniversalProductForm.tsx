@@ -34,7 +34,6 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
     certifications: []
   });
 
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [industries, setIndustries] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,27 +45,12 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (formData.industry_type) {
-      loadCategories(formData.industry_type);
-    }
-  }, [formData.industry_type]);
-
   const loadIndustries = async () => {
     try {
       const industriesData = await industryService.getIndustries();
       setIndustries(industriesData);
     } catch (error) {
       console.error('Failed to load industries:', error);
-    }
-  };
-
-  const loadCategories = async (industryType: string) => {
-    try {
-      const categoriesData = await industryService.getCategoriesByIndustry(industryType);
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
     }
   };
 
@@ -211,19 +195,14 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Category *
         </label>
-        <select
+        <textarea
           value={formData.category_id}
           onChange={(e) => handleInputChange('category_id', e.target.value)}
+          rows={2}
+          placeholder="Enter product category (e.g., Electronics, Pharmaceuticals, Luxury Goods, Automotive Parts)"
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.category_id ? 'border-red-300' : ''
             }`}
-        >
-          <option value="">Select a category</option>
-          {categories.map(category => (
-            <option key={category.category_id} value={category.category_id}>
-              {category.category_name}
-            </option>
-          ))}
-        </select>
+        />
         {errors.category_id && (
           <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
         )}
