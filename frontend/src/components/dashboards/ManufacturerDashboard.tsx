@@ -70,7 +70,7 @@ const ManufacturerDashboard: React.FC = () => {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">
-                    {industryType} Manufacturer Dashboard
+                    Manufacturer Dashboard
                 </h1>
                 <div className="mt-2 flex items-center gap-2">
                     <p className="text-gray-600">
