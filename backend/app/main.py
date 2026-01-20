@@ -81,7 +81,21 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "service": "packguard-api"
+        "service": "packguard-api",
+        "version": settings.APP_VERSION,
+        "timestamp": time.time()
+    }
+
+
+@app.get("/deployment-test")
+async def deployment_test():
+    """Test endpoint to verify latest code is deployed"""
+    import datetime
+    return {
+        "message": "Latest code deployed successfully!",
+        "deployment_timestamp": "2025-01-20T18:30:00Z",  # Update this each deploy
+        "server_time": datetime.datetime.utcnow().isoformat(),
+        "version": settings.APP_VERSION
     }
 
 
