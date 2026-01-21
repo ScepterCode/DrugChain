@@ -48,8 +48,20 @@ async def list_industries(db: Session = Depends(get_db)):
     Get list of all available industries.
     Public endpoint - no authentication required.
     """
-    industries = db.query(ProductCategory.industry_type).distinct().all()
-    return [industry[0] for industry in industries]
+    # Temporary fix: Return hardcoded industries until product_categories table is created
+    # TODO: Re-enable database query after running Alembic migration 001_packguard_expansion
+    return [
+        "Healthcare",
+        "Technology",
+        "Fashion",
+        "Consumer Goods",
+        "Automotive",
+        "Personal Care"
+    ]
+    
+    # Original code (disabled until migration is run):
+    # industries = db.query(ProductCategory.industry_type).distinct().all()
+    # return [industry[0] for industry in industries]
 
 
 @router.get("/{category_id}", response_model=ProductCategoryResponse)

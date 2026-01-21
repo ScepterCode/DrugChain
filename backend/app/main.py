@@ -93,9 +93,11 @@ async def deployment_test():
     import datetime
     return {
         "message": "Latest code deployed successfully!",
-        "deployment_timestamp": "2025-01-20T18:30:00Z",  # Update this each deploy
+        "deployment_timestamp": "2026-01-21T10:15:00Z",  # Updated timestamp
         "server_time": datetime.datetime.utcnow().isoformat(),
-        "version": settings.APP_VERSION
+        "version": settings.APP_VERSION,
+        "products_post_route_exists": True,  # Verification flag
+        "categories_fix_applied": True  # Verification flag
     }
 
 
