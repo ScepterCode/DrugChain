@@ -38,6 +38,12 @@ export const batchService = {
         return response.data.data;
     },
 
+    // Get batch packs
+    getBatchPacks: async (id: string) => {
+        const response = await api.get<{ data: { packs: any[], total_count: number } }>(`/ids/batch/${id}/packs`);
+        return response.data.data;
+    },
+
     // Create new batch
     createBatch: async (data: BatchCreateData) => {
         const response = await api.post<{ data: Batch }>('/ids/batch', data);

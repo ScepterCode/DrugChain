@@ -61,13 +61,8 @@ const BatchDetailsPage: React.FC = () => {
         setPacksLoading(true);
         try {
             const decodedBatchId = decodeURIComponent(batchId);
-            const response = await fetch(`/api/v1/ids/batch/${encodeURIComponent(decodedBatchId)}/packs`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const data = await response.json();
-            setPacks(data.data.packs);
+            const data = await batchService.getBatchPacks(decodedBatchId);
+            setPacks(data.packs);
             setShowPacks(true);
         } catch (err) {
             console.error('Failed to load packs:', err);
