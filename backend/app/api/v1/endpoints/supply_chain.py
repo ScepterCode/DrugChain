@@ -34,7 +34,7 @@ class StockMovement(BaseModel):
     notes: Optional[str]
 
 
-@router.post("receive-stock")
+@router.post("/receive-stock")
 async def receive_stock(
     request: ReceiveStockRequest,
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
@@ -83,7 +83,7 @@ async def receive_stock(
     }
 
 
-@router.post("transfer-out")
+@router.post("/transfer-out")
 async def transfer_out(
     request: TransferOutRequest,
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
@@ -144,7 +144,7 @@ async def transfer_out(
     }
 
 
-@router.get("inventory")
+@router.get("/inventory")
 async def get_inventory(
     product_id: Optional[str] = None,
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
@@ -229,7 +229,7 @@ async def get_inventory(
     }
 
 
-@router.get("transfer-history")
+@router.get("/transfer-history")
 async def get_transfer_history(
     limit: int = 50,
     offset: int = 0,
@@ -275,7 +275,7 @@ async def get_transfer_history(
     }
 
 
-@router.get("low-stock-alerts")
+@router.get("/low-stock-alerts")
 async def get_low_stock_alerts(
     threshold: int = 5,  # Cartons
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),

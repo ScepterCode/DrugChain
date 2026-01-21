@@ -94,13 +94,13 @@ async def deployment_test():
     import datetime
     return {
         "message": "Latest code deployed successfully!",
-        "deployment_timestamp": "2026-01-21T11:30:00Z",  # Updated timestamp
+        "deployment_timestamp": "2026-01-21T12:00:00Z",  # Updated timestamp
         "server_time": datetime.datetime.utcnow().isoformat(),
         "version": settings.APP_VERSION,
         "products_post_route_exists": True,  # Verification flag
         "categories_fix_applied": True,  # Verification flag
-        "batches_trailing_slash_fix": True,  # NEW: Batch endpoints fixed
-        "supply_chain_trailing_slash_fix": True  # NEW: Supply chain endpoints fixed
+        "batches_routes_with_slash": True,  # NEW: Reverted to leading slashes
+        "supply_chain_routes_with_slash": True  # NEW: Reverted to leading slashes
     }
 
 
