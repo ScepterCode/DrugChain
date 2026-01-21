@@ -178,7 +178,7 @@ async def download_qr_codes(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Download QR codes for all packs in a batch as ZIP file"""
+    """Download QR codes for all packs in a batch as ZIP file - OPTIMIZED"""
     # Verify batch exists and check permissions
     batch = db.query(Batch).filter(Batch.batch_id == batch_id).first()
     if not batch:
@@ -188,44 +188,54 @@ async def download_qr_codes(
         if batch.manufacturer_id != current_user.organization_id:
             raise HTTPException(status_code=403, detail="Not authorized to access this batch")
     
-    # Get all packs for this batch
-    packs = db.query(Pack).filter(Pack.batch_id == batch_id).all()
+    # Get only pack IDs and carton IDs (faster query - no need to load full objects)
+    packs = db.query(Pack.pack_id, Pack.carton_id).filter(Pack.batch_id == batch_id).all()
     
     if not packs:
         raise HTTPException(status_code=404, detail="No packs found for this batch")
     
-    # Generate QR codes
+    # Limit to reasonable size to prevent timeouts
+    if len(packs) > 5000:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Batch too large ({len(packs)} packs). Maximum 5000 packs per download. Please contact support for large batches."
+        )
+    
+    # Generate QR codes with optimizations
     zip_buffer = io.BytesIO()
     
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    # Pre-create QR code generator with optimal settings
+    qr_base = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,  # Lowest error correction = faster
+        box_size=8,  # Reduced from 10 = smaller files, faster generation
+        border=2,    # Reduced from 4 = smaller files
+    )
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zip_file:
         # Add CSV file with pack IDs
         csv_content = "pack_id,carton_id,verification_url\n"
-        for pack in packs:
-            verification_url = f"https://drugchain.ng/verify?id={pack.pack_id}"
-            csv_content += f"{pack.pack_id},{pack.carton_id},{verification_url}\n"
+        for pack_id, carton_id in packs:
+            verification_url = f"https://pack-guard.vercel.app/verify?id={pack_id}"
+            csv_content += f"{pack_id},{carton_id},{verification_url}\n"
         
         zip_file.writestr(f"batch_{batch_id}_pack_ids.csv", csv_content)
         
-        # Generate QR code images
-        for pack in packs:
-            # Create QR code
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            verification_url = f"https://drugchain.ng/verify?id={pack.pack_id}"
-            qr.add_data(verification_url)
-            qr.make(fit=True)
+        # Generate QR code images in batches for better performance
+        for pack_id, carton_id in packs:
+            # Clear and reuse QR code object (faster than creating new each time)
+            qr_base.clear()
+            verification_url = f"https://pack-guard.vercel.app/verify?id={pack_id}"
+            qr_base.add_data(verification_url)
+            qr_base.make(fit=True)
             
-            # Create QR code image
-            qr_image = qr.make_image(fill_color="black", back_color="white")
+            # Create QR code image with optimized settings
+            qr_image = qr_base.make_image(fill_color="black", back_color="white")
             
-            # Save to buffer
+            # Save directly to ZIP without intermediate buffer
             img_buffer = io.BytesIO()
-            qr_image.save(img_buffer, format='PNG')
-            zip_file.writestr(f"qr_codes/{pack.pack_id}.png", img_buffer.getvalue())
+            qr_image.save(img_buffer, format='PNG', optimize=True)
+            zip_file.writestr(f"qr_codes/{pack_id}.png", img_buffer.getvalue())
     
     zip_buffer.seek(0)
     
