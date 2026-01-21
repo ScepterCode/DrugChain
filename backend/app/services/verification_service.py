@@ -43,26 +43,57 @@ class VerificationService:
     
     @staticmethod
     def verify_carton_with_authorization(db: Session, carton_id: str, ip_address: str = None, 
-                                       location: str = None, phone_number: str = None) -> dict:
+                                       location: str = None, phone_number: str = None, 
+                                       current_user = None) -> dict:
         """
         Verify carton with role-based authorization
-        Only registered distributors and pharmacies can scan carton codes
+        Supports both authenticated users (via JWT token) and phone-based verification
+        Only registered distributors, retailers, manufacturers, and regulators can scan carton codes
         """
-        # 1. Check authorization first
-        auth_result = SupplyChainTrackingService.verify_entity_authorization(db, phone_number)
-        
-        if not auth_result.get("authorized"):
-            return {
-                "success": False,
-                "verification_result": "UNAUTHORIZED",
-                "message": "🚫 ACCESS DENIED: Only registered distributors and pharmacies can verify carton codes. As an end user, please scan individual pack codes instead.",
-                "data": {
-                    "error_type": "UNAUTHORIZED_CARTON_ACCESS",
-                    "reason": auth_result.get("reason", "Not authorized"),
-                    "allowed_action": "Scan individual pack codes (PK-XXXXXXXX) for product verification",
-                    "contact_info": "Contact your pharmacy or distributor for assistance"
+        # 1. Check authorization - prioritize authenticated user over phone number
+        if current_user:
+            # User is logged in - check their role
+            from app.models import UserRole
+            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.PHARMACY, UserRole.RETAILER, 
+                              UserRole.MANUFACTURER, UserRole.REGULATOR]
+            
+            if current_user.role in authorized_roles:
+                auth_result = {
+                    "authorized": True,
+                    "entity_name": current_user.organization.organization_name if current_user.organization else "Unknown Organization",
+                    "entity_type": current_user.role.value,
+                    "entity_id": current_user.organization_id,
+                    "user_name": f"{current_user.first_name} {current_user.last_name}",
+                    "user_id": current_user.user_id
                 }
-            }
+            else:
+                return {
+                    "success": False,
+                    "verification_result": "UNAUTHORIZED",
+                    "message": "🚫 ACCESS DENIED: Your account role does not have permission to verify carton codes. Only manufacturers, distributors, retailers, and regulators can scan cartons.",
+                    "data": {
+                        "error_type": "UNAUTHORIZED_ROLE",
+                        "user_role": current_user.role.value,
+                        "allowed_roles": ["MANUFACTURER", "DISTRIBUTOR", "RETAILER", "PHARMACY", "REGULATOR"],
+                        "allowed_action": "Scan individual pack codes (PK-XXXXXXXX) for product verification"
+                    }
+                }
+        else:
+            # User is not logged in - check phone number authorization
+            auth_result = SupplyChainTrackingService.verify_entity_authorization(db, phone_number)
+            
+            if not auth_result.get("authorized"):
+                return {
+                    "success": False,
+                    "verification_result": "UNAUTHORIZED",
+                    "message": "🚫 ACCESS DENIED: Only registered distributors, retailers, and pharmacies can verify carton codes. Please log in to your account or scan individual pack codes instead.",
+                    "data": {
+                        "error_type": "UNAUTHORIZED_CARTON_ACCESS",
+                        "reason": auth_result.get("reason", "Not authorized"),
+                        "allowed_action": "Log in to your account or scan individual pack codes (PK-XXXXXXXX) for product verification",
+                        "contact_info": "Contact your pharmacy or distributor for assistance"
+                    }
+                }
         
         # 2. Proceed with carton verification for authorized entities
         return VerificationService._verify_carton_authorized(
@@ -263,12 +294,13 @@ class VerificationService:
         }
     
     @staticmethod
-    def verify_carton(db: Session, carton_id: str, ip_address: str = None, location: str = None, phone_number: str = None) -> dict:
+    def verify_carton(db: Session, carton_id: str, ip_address: str = None, location: str = None, 
+                     phone_number: str = None, current_user = None) -> dict:
         """
         Legacy carton verification method - now redirects to authorized verification
         """
         return VerificationService.verify_carton_with_authorization(
-            db, carton_id, ip_address, location, phone_number
+            db, carton_id, ip_address, location, phone_number, current_user
         )
 
     @staticmethod

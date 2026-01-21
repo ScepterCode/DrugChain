@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, Request, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 from app.db.session import get_db
 from app.schemas.verification import VerificationRequest, VerificationResponse, CartonVerificationRequest
 from app.services.verification_service import VerificationService
+from app.api.dependencies import get_current_user
+from app.models import User
 
 router = APIRouter()
 
@@ -35,20 +37,33 @@ async def verify_product_pack(
 async def verify_carton(
     request: CartonVerificationRequest,
     fastapi_req: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = None
 ):
     """
     Verify a carton for supply chain tracking with role-based authorization
-    Only registered distributors and pharmacies can verify carton codes
+    Only registered distributors, retailers, manufacturers, and regulators can verify carton codes
+    
+    Supports both authenticated (logged-in users) and anonymous verification attempts
     """
     client_ip = fastapi_req.client.host
+    
+    # Try to get authenticated user (optional - won't fail if not logged in)
+    try:
+        from app.api.dependencies import oauth2_scheme
+        token = await oauth2_scheme(fastapi_req)
+        if token:
+            current_user = await get_current_user(token, db)
+    except:
+        current_user = None
     
     result = VerificationService.verify_carton_with_authorization(
         db=db,
         carton_id=request.carton_id,
         ip_address=client_ip,
         location=getattr(request, 'location', None),
-        phone_number=getattr(request, 'phone_number', None)
+        phone_number=getattr(request, 'phone_number', None),
+        current_user=current_user
     )
     
     return result

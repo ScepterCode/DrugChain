@@ -188,6 +188,7 @@ class SupplyChainTrackingService:
     def verify_entity_authorization(db: Session, phone_number: str, entity_type: str = None) -> Dict[str, Any]:
         """
         Verify if an entity is authorized to scan carton codes
+        Supports MANUFACTURER, DISTRIBUTOR, RETAILER, PHARMACY, and REGULATOR roles
         """
         if not phone_number:
             return {
@@ -199,13 +200,15 @@ class SupplyChainTrackingService:
         user = db.query(User).filter(User.phone_number == phone_number).first()
         
         if user:
-            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.PHARMACY, UserRole.MANUFACTURER, UserRole.REGULATOR]
+            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.PHARMACY, UserRole.RETAILER, 
+                              UserRole.MANUFACTURER, UserRole.REGULATOR]
             
             if user.role in authorized_roles:
                 return {
                     "authorized": True,
                     "entity_name": user.organization.organization_name if user.organization else "Unknown Organization",
                     "entity_type": user.role.value,
+                    "entity_id": user.organization_id,
                     "user_name": f"{user.first_name} {user.last_name}"
                 }
         
@@ -227,7 +230,7 @@ class SupplyChainTrackingService:
         
         return {
             "authorized": False,
-            "reason": "Not registered as authorized distributor or pharmacy"
+            "reason": "Not registered as authorized manufacturer, distributor, retailer, pharmacy, or regulator"
         }
     
     @staticmethod

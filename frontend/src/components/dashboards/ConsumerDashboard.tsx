@@ -2,15 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const ConsumerDashboard: React.FC = () => {
-    const [recentVerifications] = useState([
-        {
-            id: '1',
-            product_name: 'Sample Product',
-            verification_date: '2024-01-14',
-            result: 'AUTHENTIC',
-            pack_id: 'PACK123456'
-        }
-    ]);
+    const [recentVerifications] = useState<any[]>([]);
 
     return (
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

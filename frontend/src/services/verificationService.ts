@@ -49,6 +49,7 @@ export interface CartonVerificationResponse {
 
 export const verificationService = {
     // Verify pack ID (One-time scan enforcement)
+    // Works for both authenticated and anonymous users
     verifyPack: async (packId: string, location?: string, phoneNumber?: string) => {
         // remove any "PK-" prefix or spaces user might type
         const cleanId = packId.trim().toUpperCase();
@@ -72,6 +73,8 @@ export const verificationService = {
     },
 
     // Verify carton ID (Supply chain tracking)
+    // Requires authentication - JWT token automatically included by api.ts interceptor
+    // Only authorized roles (MANUFACTURER, DISTRIBUTOR, RETAILER, PHARMACY, REGULATOR) can verify cartons
     verifyCarton: async (cartonId: string, location?: string, phoneNumber?: string) => {
         const cleanId = cartonId.trim().toUpperCase();
 
