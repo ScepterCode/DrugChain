@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Carton Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            font-size: 16px;
+        }
+        button {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #4338CA;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #D1FAE5;
+            border: 1px solid #10B981;
+        }
+        .error {
+            background: #FEE2E2;
+            border: 1px solid #EF4444;
+        }
+        .info {
+            background: #DBEAFE;
+            border: 1px solid #3B82F6;
+        }
+        pre {
+            background: #F3F4F6;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Direct Carton Verification Test</h1>
+        <p>This tests carton verification directly against the backend API.</p>
+        
+        <div>
+            <label for="cartonId"><strong>Carton ID:</strong></label>
+            <input 
+                type="text" 
+                id="cartonId" 
+                placeholder="CT-20260121-JGUYNW-0024"
+                value="CT-20260121-JGUYNW-0024"
+            />
+        </div>
+
+        <div>
+            <label for="token"><strong>JWT Token (from localStorage):</strong></label>
+            <input 
+                type="text" 
+                id="token" 
+                placeholder="Paste your JWT token here"
+            />
+            <small>Get this from browser console: localStorage.getItem('access_token')</small>
+        </div>
+
+        <button onclick="testCartonVerification()">🚀 Test Carton Verification</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://drugchain-1.onrender.com/api/v1';
+
+        async function testCartonVerification() {
+            const cartonId = document.getElementById('cartonId').value.trim();
+            const token = document.getElementById('token').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!cartonId) {
+                resultDiv.innerHTML = '<div class="result error">❌ Please enter a carton ID</div>';
+                return;
+            }
+
+            if (!token) {
+                resultDiv.innerHTML = '<div class="result error">❌ Please enter your JWT token</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="result info">⏳ Testing carton verification...</div>';
+
+            try {
+                // Test 1: Check ID detection
+                const isCarton = cartonId.toUpperCase().startsWith('CT-');
+                console.log('ID Detection:', isCarton ? 'CARTON' : 'NOT CARTON');
+
+                // Test 2: Call backend API
+                const response = await fetch(`${BACKEND_URL}/verify/carton`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        carton_id: cartonId.toUpperCase(),
+                        verification_method: 'WEB'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Backend Response:', data);
+
+                // Display result
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ SUCCESS! Carton Verified</h3>
+                            <p><strong>Status:</strong> ${data.verification_result}</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Product:</strong> ${data.data?.product_name || 'N/A'}</p>
+                            <p><strong>Batch:</strong> ${data.data?.batch_id || 'N/A'}</p>
+                            <details>
+                                <summary>Full Response</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Verification Failed</h3>
+                            <p><strong>Status:</strong> ${data.verification_result}</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <details>
+                                <summary>Full Response</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p>Check browser console for details</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-fill token if available
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('access_token');
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+                document.getElementById('result').innerHTML = `
+                    <div class="result info">
+                        ℹ️ JWT token auto-filled from localStorage. Click "Test Carton Verification" to proceed.
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
