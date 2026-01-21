@@ -9,6 +9,7 @@ import QRScanner from '../QRScanner';
 import BatchFlowVisualization from '../supply-chain/BatchFlowVisualization';
 import { detectIDType, extractIDFromQR } from '../../utils/idDetector';
 
+// Manufacturer Dashboard with verification widget
 const ManufacturerDashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
     const [stats, setStats] = useState({
