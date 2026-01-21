@@ -237,30 +237,80 @@ async def get_distributor_dashboard(
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
-    """Get distributor/pharmacy dashboard statistics with enhanced inventory data"""
+    """Get distributor/pharmacy dashboard statistics - REAL DATA ONLY"""
     
     if not current_user.organization_id:
-         return {"data": {"total_inventory_cartons": 0, "total_inventory_packs": 0}}
+         return {"data": {
+             "total_inventory_cartons": 0,
+             "total_inventory_packs": 0,
+             "pending_transfers": 0,
+             "completed_transfers": 0,
+             "low_stock_alerts": 0,
+             "recent_transfers": [],
+             "inventory_by_product": []
+         }}
 
     org_id = current_user.organization_id
 
     # Count Cartons currently held by this org
     total_cartons = db.query(Carton).filter(Carton.current_holder_id == org_id).count()
     
-    # Estimate packs (sum of packs_per_carton for held cartons)
+    # Sum of packs_per_carton for held cartons
     total_packs = db.query(func.sum(Carton.packs_per_carton))\
         .filter(Carton.current_holder_id == org_id).scalar() or 0
+    
+    # Get inventory breakdown by product
+    inventory_by_product = []
+    try:
+        # Get cartons grouped by product
+        carton_products = db.query(
+            Product.product_name,
+            Product.product_code,
+            func.count(Carton.carton_id).label('carton_count'),
+            func.sum(Carton.packs_per_carton).label('pack_count')
+        ).select_from(Carton)\
+         .join(Batch, Carton.batch_id == Batch.batch_id)\
+         .join(Product, Batch.product_id == Product.product_id)\
+         .filter(Carton.current_holder_id == org_id)\
+         .group_by(Product.product_id, Product.product_name, Product.product_code)\
+         .all()
+        
+        for item in carton_products:
+            # Determine stock status based on quantity
+            cartons = item.carton_count or 0
+            packs = item.pack_count or 0
+            
+            if cartons == 0:
+                status = 'OUT_OF_STOCK'
+            elif cartons < 5:  # Less than 5 cartons is considered low
+                status = 'LOW'
+            else:
+                status = 'NORMAL'
+            
+            inventory_by_product.append({
+                'product_name': item.product_name,
+                'product_code': item.product_code,
+                'cartons': cartons,
+                'packs': packs,
+                'status': status
+            })
+    except Exception as e:
+        logger.error(f"Error getting inventory by product: {e}")
+        inventory_by_product = []
+    
+    # Count low stock items
+    low_stock_count = sum(1 for item in inventory_by_product if item['status'] in ['LOW', 'OUT_OF_STOCK'])
     
     # Real data only - no mock data
     return {
         "data": {
             "total_inventory_cartons": total_cartons,
-            "total_inventory_packs": total_packs,
-            "pending_transfers": 0,  # Will be 0 until transfer system is implemented
-            "completed_transfers": 0,  # Will be 0 until transfer system is implemented
-            "low_stock_alerts": 0,  # Will be 0 until stock monitoring is implemented
-            "recent_transfers": [],  # Will be empty until transfer history is implemented
-            "inventory_by_product": []  # Will be empty until product-wise inventory is implemented
+            "total_inventory_packs": int(total_packs),
+            "pending_transfers": 0,  # Transfer system not yet implemented
+            "completed_transfers": 0,  # Transfer system not yet implemented
+            "low_stock_alerts": low_stock_count,
+            "recent_transfers": [],  # Transfer system not yet implemented
+            "inventory_by_product": inventory_by_product
         }
     }
 
@@ -775,7 +825,7 @@ async def get_blockchain_analytics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get blockchain network analytics and status"""
+    """Get blockchain network analytics and status - REAL DATA ONLY"""
     
     # Get blockchain analytics from blockchain service
     blockchain_data = blockchain_service.get_blockchain_analytics()
@@ -810,12 +860,7 @@ async def get_blockchain_analytics(
             # Security metrics
             "dual_layer_security_active": blockchain_data.get('network_status') == 'HEALTHY',
             "immutable_records_count": blockchain_verified,
-            "cryptographic_verification_active": True,
-            
-            # Performance metrics - real data only
-            "average_verification_time_ms": 0,  # Will be calculated when we track verification times
-            "blockchain_uptime_percentage": 0.0,  # Will be calculated from actual blockchain status
-            "consensus_success_rate": 0.0  # Will be calculated from actual consensus data
+            "cryptographic_verification_active": True
         }
     }
 
