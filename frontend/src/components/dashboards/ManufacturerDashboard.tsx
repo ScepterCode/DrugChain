@@ -150,14 +150,9 @@ const ManufacturerDashboard: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                     Manufacturer Dashboard
                 </h1>
-                <div className="mt-2 flex items-center gap-2">
-                    <p className="text-gray-600">
-                        Manage your products, track verifications, and monitor supply chain security.
-                    </p>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        {industryType}
-                    </span>
-                </div>
+                <p className="mt-2 text-gray-600">
+                    Manage your products, track verifications, and monitor supply chain security.
+                </p>
             </div>
 
             {/* Quick Stats */}
