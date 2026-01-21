@@ -37,8 +37,7 @@ async def verify_product_pack(
 async def verify_carton(
     request: CartonVerificationRequest,
     fastapi_req: Request,
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = None
+    db: Session = Depends(get_db)
 ):
     """
     Verify a carton for supply chain tracking with role-based authorization
@@ -49,15 +48,26 @@ async def verify_carton(
     client_ip = fastapi_req.client.host
     
     # Try to get authenticated user (optional - won't fail if not logged in)
+    current_user = None
     try:
         from app.api.dependencies import oauth2_scheme
         token = await oauth2_scheme(fastapi_req)
         if token:
             current_user = await get_current_user(token, db)
     except:
-        current_user = None
+        # User is not authenticated - that's okay, we'll check phone_number instead
+        pass
     
     result = VerificationService.verify_carton_with_authorization(
+        db=db,
+        carton_id=request.carton_id,
+        ip_address=client_ip,
+        location=getattr(request, 'location', None),
+        phone_number=getattr(request, 'phone_number', None),
+        current_user=current_user
+    )
+    
+    return result
         db=db,
         carton_id=request.carton_id,
         ip_address=client_ip,
