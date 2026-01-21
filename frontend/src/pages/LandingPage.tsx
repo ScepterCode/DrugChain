@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { verificationService, VerificationResponse } from '../services/verificationService';
 import VerificationResult from '../components/verification/VerificationResult';
 import QRScanner from '../components/QRScanner';
+import { detectIDType, extractIDFromQR } from '../utils/idDetector';
 
 const LandingPage: React.FC = () => {
     const [packId, setPackId] = useState('');
@@ -16,13 +17,19 @@ const LandingPage: React.FC = () => {
         setShowScanner(false);
         
         try {
-            // Detect code type and route accordingly
-            const cleanId = id.trim().toUpperCase();
+            // Use centralized ID detection
+            const detection = detectIDType(id);
+            const cleanId = detection.cleanId;
             
-            // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
-            if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
-                // This is a carton code - check if user is authorized
+            console.log('[LandingPage] Original ID:', id);
+            console.log('[LandingPage] Detected type:', detection.type);
+            console.log('[LandingPage] Clean ID:', cleanId);
+            
+            // Route based on detected type
+            if (detection.type === 'CARTON') {
+                console.log('[LandingPage] Calling verifyCarton()');
                 const data = await verificationService.verifyCarton(cleanId);
+                console.log('[LandingPage] Carton verification response:', data);
                 // Convert CartonVerificationResponse to VerificationResponse format
                 setResult({
                     success: data.success,
@@ -31,12 +38,13 @@ const LandingPage: React.FC = () => {
                     data: data.data as any
                 });
             } else {
-                // This is a pack code - proceed with normal verification
+                console.log('[LandingPage] Calling verifyPack()');
                 const data = await verificationService.verifyPack(cleanId);
+                console.log('[LandingPage] Pack verification response:', data);
                 setResult(data);
             }
         } catch (error) {
-            console.error(error);
+            console.error('[LandingPage] Verification error:', error);
             setResult({
                 success: false,
                 verification_result: 'INVALID',
@@ -49,18 +57,10 @@ const LandingPage: React.FC = () => {
 
     const handleScan = (text: string) => {
         if (text) {
-            let scannedId = text;
-            if (text.includes('id=')) {
-                try {
-                    const urlParams = new URLSearchParams(new URL(text).search);
-                    scannedId = urlParams.get('id') || text;
-                } catch (e) {
-                    const parts = text.split('id=');
-                    if (parts.length > 1) {
-                        scannedId = parts[1];
-                    }
-                }
-            }
+            // Extract ID from QR code (handles URLs with id= parameter)
+            const scannedId = extractIDFromQR(text);
+            console.log('[LandingPage] QR scanned:', text);
+            console.log('[LandingPage] Extracted ID:', scannedId);
             setPackId(scannedId);
             verify(scannedId);
             // Close scanner after successful scan

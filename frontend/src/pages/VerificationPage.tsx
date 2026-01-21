@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { verificationService, VerificationResponse } from '../services/verificationService';
 import VerificationResult from '../components/verification/VerificationResult';
 import QRScanner from '../components/QRScanner';
+import { detectIDType, extractIDFromQR } from '../utils/idDetector';
 
 const VerificationPage: React.FC = () => {
     const location = useLocation();
@@ -26,13 +27,19 @@ const VerificationPage: React.FC = () => {
         setShowScanner(false);
         
         try {
-            // Detect code type and route accordingly
-            const cleanId = id.trim().toUpperCase();
+            // Use centralized ID detection
+            const detection = detectIDType(id);
+            const cleanId = detection.cleanId;
             
-            // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
-            if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
-                // This is a carton code - check if user is authorized
+            console.log('[VerificationPage] Original ID:', id);
+            console.log('[VerificationPage] Detected type:', detection.type);
+            console.log('[VerificationPage] Clean ID:', cleanId);
+            
+            // Route based on detected type
+            if (detection.type === 'CARTON') {
+                console.log('[VerificationPage] Calling verifyCarton()');
                 const data = await verificationService.verifyCarton(cleanId);
+                console.log('[VerificationPage] Carton verification response:', data);
                 // Convert CartonVerificationResponse to VerificationResponse format
                 setResult({
                     success: data.success,
@@ -41,12 +48,13 @@ const VerificationPage: React.FC = () => {
                     data: data.data as any
                 });
             } else {
-                // This is a pack code - proceed with normal verification
+                console.log('[VerificationPage] Calling verifyPack()');
                 const data = await verificationService.verifyPack(cleanId);
+                console.log('[VerificationPage] Pack verification response:', data);
                 setResult(data);
             }
         } catch (error) {
-            console.error(error);
+            console.error('[VerificationPage] Verification error:', error);
             setResult({
                 success: false,
                 verification_result: 'INVALID',
@@ -59,22 +67,10 @@ const VerificationPage: React.FC = () => {
 
     const handleScan = (text: string) => {
         if (text) {
-            // Parse ID from URL or use raw text if it looks like an ID
-            let scannedId = text;
-            if (text.includes('id=')) {
-                try {
-                    const urlParams = new URLSearchParams(new URL(text).search);
-                    scannedId = urlParams.get('id') || text;
-                } catch (e) {
-                    // Try manual split if new URL() fails
-                    const parts = text.split('id=');
-                    if (parts.length > 1) {
-                        scannedId = parts[1];
-                    }
-                }
-            }
-
-            // Update pack ID and verify
+            // Extract ID from QR code (handles URLs with id= parameter)
+            const scannedId = extractIDFromQR(text);
+            console.log('[VerificationPage] QR scanned:', text);
+            console.log('[VerificationPage] Extracted ID:', scannedId);
             setPackId(scannedId);
             verify(scannedId);
             // Close scanner after successful scan

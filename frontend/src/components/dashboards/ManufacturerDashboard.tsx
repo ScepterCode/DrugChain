@@ -7,6 +7,7 @@ import { verificationService, VerificationResponse } from '../../services/verifi
 import VerificationResult from '../verification/VerificationResult';
 import QRScanner from '../QRScanner';
 import BatchFlowVisualization from '../supply-chain/BatchFlowVisualization';
+import { detectIDType, extractIDFromQR } from '../../utils/idDetector';
 
 const ManufacturerDashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
@@ -79,15 +80,17 @@ const ManufacturerDashboard: React.FC = () => {
         setShowScanner(false);
         
         try {
-            // Detect code type and route accordingly
-            const cleanId = id.trim().toUpperCase();
+            // Use centralized ID detection
+            const detection = detectIDType(id);
+            const cleanId = detection.cleanId;
             
-            console.log('[ManufacturerDashboard] Verifying ID:', cleanId);
+            console.log('[ManufacturerDashboard] Original ID:', id);
+            console.log('[ManufacturerDashboard] Detected type:', detection.type);
+            console.log('[ManufacturerDashboard] Clean ID:', cleanId);
             
-            // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
-            if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
-                console.log('[ManufacturerDashboard] Detected as CARTON code - calling verifyCarton()');
-                // This is a carton code - check if user is authorized
+            // Route based on detected type
+            if (detection.type === 'CARTON') {
+                console.log('[ManufacturerDashboard] Calling verifyCarton()');
                 const data = await verificationService.verifyCarton(cleanId);
                 console.log('[ManufacturerDashboard] Carton verification response:', data);
                 // Convert CartonVerificationResponse to VerificationResponse format
@@ -98,8 +101,8 @@ const ManufacturerDashboard: React.FC = () => {
                     data: data.data as any
                 });
             } else {
-                console.log('[ManufacturerDashboard] Detected as PACK code - calling verifyPack()');
-                // This is a pack code - proceed with normal verification
+                // Default to pack verification for PACK, BATCH, or UNKNOWN types
+                console.log('[ManufacturerDashboard] Calling verifyPack()');
                 const data = await verificationService.verifyPack(cleanId);
                 console.log('[ManufacturerDashboard] Pack verification response:', data);
                 setResult(data);
@@ -118,18 +121,10 @@ const ManufacturerDashboard: React.FC = () => {
 
     const handleScan = (text: string) => {
         if (text) {
-            let scannedId = text;
-            if (text.includes('id=')) {
-                try {
-                    const urlParams = new URLSearchParams(new URL(text).search);
-                    scannedId = urlParams.get('id') || text;
-                } catch (e) {
-                    const parts = text.split('id=');
-                    if (parts.length > 1) {
-                        scannedId = parts[1];
-                    }
-                }
-            }
+            // Extract ID from QR code (handles URLs with id= parameter)
+            const scannedId = extractIDFromQR(text);
+            console.log('[ManufacturerDashboard] QR scanned:', text);
+            console.log('[ManufacturerDashboard] Extracted ID:', scannedId);
             setPackId(scannedId);
             verify(scannedId);
             // Close scanner after successful scan
