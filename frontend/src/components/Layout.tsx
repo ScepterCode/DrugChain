@@ -43,13 +43,6 @@ const Layout: React.FC = () => {
                     { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
                 ];
 
-            case 'RETAILER':
-                return [
-                    ...baseNavigation,
-                    { name: 'Supply Chain', href: '/portal/distributor', current: location.pathname === '/portal/distributor' },
-                    { name: 'Analytics', href: '/portal/analytics', current: location.pathname === '/portal/analytics' }
-                ];
-
             case 'REGULATOR':
                 return [
                     ...baseNavigation,
