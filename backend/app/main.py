@@ -15,6 +15,7 @@ app = FastAPI(
     description="PackGuard - Universal Product Authentication Platform",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
+    redirect_slashes=True  # Auto-redirect /products to /products/
 )
 
 # Request logging middleware

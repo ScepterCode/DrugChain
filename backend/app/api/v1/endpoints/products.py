@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 # POST route - must be before GET / to avoid conflicts
-@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 async def create_product(
     product_data: ProductCreate,
     db: Session = Depends(get_db),
@@ -62,7 +62,7 @@ async def create_product(
 
 
 # GET / route - authenticated list
-@router.get("/", response_model=List[ProductResponse])
+@router.get("", response_model=List[ProductResponse])
 async def list_products(
     skip: int = 0,
     limit: int = 50,
