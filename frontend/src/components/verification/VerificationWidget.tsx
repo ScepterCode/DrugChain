@@ -127,11 +127,9 @@ const VerificationWidget: React.FC = () => {
                             </button>
                         </div>
                         <QRScanner
-                            onScanSuccess={handleScanSuccess}
-                            onScanError={(error) => {
-                                console.error('Scan error:', error);
-                                alert('Failed to scan QR code. Please try again.');
-                            }}
+                            isVisible={showScanner}
+                            onScan={handleScanSuccess}
+                            onClose={() => setShowScanner(false)}
                         />
                     </div>
                 </div>
