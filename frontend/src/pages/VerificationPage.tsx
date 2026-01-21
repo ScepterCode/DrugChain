@@ -24,9 +24,27 @@ const VerificationPage: React.FC = () => {
         if (!id.trim()) return;
         setLoading(true);
         setShowScanner(false);
+        
         try {
-            const data = await verificationService.verifyPack(id);
-            setResult(data);
+            // Detect code type and route accordingly
+            const cleanId = id.trim().toUpperCase();
+            
+            // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
+            if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
+                // This is a carton code - check if user is authorized
+                const data = await verificationService.verifyCarton(cleanId);
+                // Convert CartonVerificationResponse to VerificationResponse format
+                setResult({
+                    success: data.success,
+                    verification_result: data.verification_result as any,
+                    message: data.message,
+                    data: data.data as any
+                });
+            } else {
+                // This is a pack code - proceed with normal verification
+                const data = await verificationService.verifyPack(cleanId);
+                setResult(data);
+            }
         } catch (error) {
             console.error(error);
             setResult({
@@ -82,7 +100,7 @@ const VerificationPage: React.FC = () => {
                         Verify Product Authenticity
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        Enter the Pack ID found on your drug packaging to instantly verify its origin and safety.
+                        Enter the Pack ID or Carton ID found on your product packaging to instantly verify its authenticity.
                     </p>
                 </div>
 
@@ -131,7 +149,7 @@ const VerificationPage: React.FC = () => {
                                         type="text"
                                         required
                                         className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                                        placeholder="Enter Pack ID (e.g. PK-ABC123XYZ)"
+                                        placeholder="Enter Pack ID (PK-...) or Carton ID (CT-...)"
                                         value={packId}
                                         onChange={(e) => setPackId(e.target.value)}
                                     />
