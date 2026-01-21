@@ -82,10 +82,14 @@ const ManufacturerDashboard: React.FC = () => {
             // Detect code type and route accordingly
             const cleanId = id.trim().toUpperCase();
             
+            console.log('[ManufacturerDashboard] Verifying ID:', cleanId);
+            
             // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
             if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
+                console.log('[ManufacturerDashboard] Detected as CARTON code - calling verifyCarton()');
                 // This is a carton code - check if user is authorized
                 const data = await verificationService.verifyCarton(cleanId);
+                console.log('[ManufacturerDashboard] Carton verification response:', data);
                 // Convert CartonVerificationResponse to VerificationResponse format
                 setResult({
                     success: data.success,
@@ -94,12 +98,14 @@ const ManufacturerDashboard: React.FC = () => {
                     data: data.data as any
                 });
             } else {
+                console.log('[ManufacturerDashboard] Detected as PACK code - calling verifyPack()');
                 // This is a pack code - proceed with normal verification
                 const data = await verificationService.verifyPack(cleanId);
+                console.log('[ManufacturerDashboard] Pack verification response:', data);
                 setResult(data);
             }
         } catch (error) {
-            console.error(error);
+            console.error('[ManufacturerDashboard] Verification error:', error);
             setResult({
                 success: false,
                 verification_result: 'INVALID',

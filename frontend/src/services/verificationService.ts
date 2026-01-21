@@ -78,6 +78,9 @@ export const verificationService = {
     verifyCarton: async (cartonId: string, location?: string, phoneNumber?: string) => {
         const cleanId = cartonId.trim().toUpperCase();
 
+        console.log('[verificationService] verifyCarton called with:', cleanId);
+        console.log('[verificationService] JWT token present:', !!localStorage.getItem('access_token'));
+
         try {
             const response = await api.post<CartonVerificationResponse>('/verify/carton', {
                 carton_id: cleanId,
@@ -85,9 +88,12 @@ export const verificationService = {
                 location: location,
                 phone_number: phoneNumber
             });
+            console.log('[verificationService] Carton verification success:', response.data);
             return response.data;
         } catch (error: any) {
+            console.error('[verificationService] Carton verification error:', error);
             if (error.response && error.response.data) {
+                console.log('[verificationService] Error response data:', error.response.data);
                 return error.response.data as CartonVerificationResponse;
             }
             throw error;
