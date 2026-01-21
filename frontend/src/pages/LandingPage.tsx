@@ -19,7 +19,8 @@ const LandingPage: React.FC = () => {
             // Detect code type and route accordingly
             const cleanId = id.trim().toUpperCase();
             
-            if (cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
+            // Check if this is a carton code (CT- prefix or CARTON- prefix or contains CARTON)
+            if (cleanId.startsWith('CT-') || cleanId.startsWith('CARTON-') || cleanId.includes('CARTON')) {
                 // This is a carton code - check if user is authorized
                 const data = await verificationService.verifyCarton(cleanId);
                 // Convert CartonVerificationResponse to VerificationResponse format
