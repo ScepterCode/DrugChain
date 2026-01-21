@@ -68,15 +68,6 @@ async def verify_carton(
     )
     
     return result
-        db=db,
-        carton_id=request.carton_id,
-        ip_address=client_ip,
-        location=getattr(request, 'location', None),
-        phone_number=getattr(request, 'phone_number', None),
-        current_user=current_user
-    )
-    
-    return result
 
 
 # Keep the original endpoint for backward compatibility
