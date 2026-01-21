@@ -17,7 +17,7 @@ from app.services.id_generation_service import IDGenerationService
 router = APIRouter()
 
 
-@router.post("/batch", response_model=BatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post("batch", response_model=BatchResponse, status_code=status.HTTP_201_CREATED)
 async def create_batch(
     batch_data: BatchCreate,
     current_user: User = Depends(require_role([UserRole.MANUFACTURER.value])),
@@ -47,7 +47,7 @@ async def create_batch(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/batches")
+@router.get("batches")
 async def list_batches(
     skip: int = 0,
     limit: int = 100,
@@ -92,7 +92,7 @@ async def list_batches(
     return {"data": batch_list}
 
 
-@router.get("/batch/{batch_id}")
+@router.get("batch/{batch_id}")
 async def get_batch(
     batch_id: str,
     current_user: User = Depends(get_current_user),
@@ -139,7 +139,7 @@ async def get_batch(
     }
 
 
-@router.get("/batch/{batch_id}/packs")
+@router.get("batch/{batch_id}/packs")
 async def get_batch_packs(
     batch_id: str,
     current_user: User = Depends(get_current_user),
@@ -172,7 +172,7 @@ async def get_batch_packs(
     }
 
 
-@router.get("/batch/{batch_id}/qr-codes")
+@router.get("batch/{batch_id}/qr-codes")
 async def download_qr_codes(
     batch_id: str,
     current_user: User = Depends(get_current_user),
@@ -236,7 +236,7 @@ async def download_qr_codes(
     )
 
 
-@router.put("/batch/{batch_id}/status")
+@router.put("batch/{batch_id}/status")
 async def update_batch_status(
     batch_id: str,
     status_data: dict,
