@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { industryService, ProductCategory, IndustrySpecificData } from '../../services/industryService';
+import { COUNTRIES, PRODUCT_CATEGORIES } from '../../constants/countries';
 
 interface UniversalProductFormProps {
   onSubmit: (productData: any) => void;
@@ -25,6 +26,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
     warranty_period_months: '',
     risk_level: 'medium',
     verification_complexity: 'standard',
+    nafdac_registration_number: '', // Add NAFDAC field
 
     // Industry-specific data (pharmaceutical fields moved here)
     industry_data: {} as IndustrySpecificData,
@@ -37,6 +39,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
   const [industries, setIndustries] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
 
   useEffect(() => {
     loadIndustries();
@@ -195,14 +199,60 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Category *
         </label>
-        <textarea
-          value={formData.category_id}
-          onChange={(e) => handleInputChange('category_id', e.target.value)}
-          rows={2}
-          placeholder="Enter product category (e.g., Electronics, Pharmaceuticals, Luxury Goods, Automotive Parts)"
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.category_id ? 'border-red-300' : ''
-            }`}
-        />
+        {!showNewCategoryInput ? (
+          <div className="flex gap-2">
+            <select
+              value={formData.category_id}
+              onChange={(e) => {
+                if (e.target.value === '__ADD_NEW__') {
+                  setShowNewCategoryInput(true);
+                } else {
+                  handleInputChange('category_id', e.target.value);
+                }
+              }}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 ${errors.category_id ? 'border-red-300' : ''}`}
+            >
+              <option value="">Select category</option>
+              {PRODUCT_CATEGORIES.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+              <option value="__ADD_NEW__">+ Add New Category</option>
+            </select>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Enter new category name"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (newCategory.trim()) {
+                  handleInputChange('category_id', newCategory.trim());
+                  setShowNewCategoryInput(false);
+                  setNewCategory('');
+                }
+              }}
+              className="mt-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowNewCategoryInput(false);
+                setNewCategory('');
+              }}
+              className="mt-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
         {errors.category_id && (
           <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
         )}
@@ -242,12 +292,28 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Country of Origin
         </label>
-        <input
-          type="text"
+        <select
           value={formData.country_of_origin}
           onChange={(e) => handleInputChange('country_of_origin', e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          placeholder="Enter country of origin"
+        >
+          <option value="">Select country</option>
+          {COUNTRIES.map(country => (
+            <option key={country} value={country}>{country}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          NAFDAC Registration Number
+        </label>
+        <input
+          type="text"
+          value={formData.nafdac_registration_number}
+          onChange={(e) => handleInputChange('nafdac_registration_number', e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          placeholder="Enter NAFDAC registration number"
         />
       </div>
 

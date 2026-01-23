@@ -11,6 +11,8 @@ export interface Product {
     requires_prescription: boolean;
     description?: string;
     nafdac_registration_number?: string;
+    brand_name?: string;
+    country_of_origin?: string;
     manufacturer_id: string;
     is_active: boolean;
     created_at: string;
@@ -64,6 +66,12 @@ export const productService = {
     // Create new product
     createProduct: async (data: ProductCreateData) => {
         const response = await api.post<Product>('/products', data);
+        return response.data;
+    },
+
+    // Update existing product
+    updateProduct: async (id: string, data: Partial<ProductCreateData>) => {
+        const response = await api.put<Product>(`/products/${id}`, data);
         return response.data;
     }
 };

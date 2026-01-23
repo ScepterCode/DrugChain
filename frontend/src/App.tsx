@@ -12,6 +12,8 @@ import BatchDetailsPage from './pages/batches/BatchDetailsPage';
 import NewBatchPage from './pages/batches/NewBatchPage';
 import ProductListPage from './pages/products/ProductListPage';
 import NewProductPage from './pages/products/NewProductPage';
+import ProductDetailPage from './pages/products/ProductDetailPage';
+import ProductEditPage from './pages/products/ProductEditPage';
 import UserManagementPage from './pages/UserManagementPage';
 import VerificationPage from './pages/VerificationPage';
 import AboutPage from './pages/AboutPage';
@@ -41,6 +43,8 @@ function App() {
                             <Route path="dashboard" element={<DashboardPage />} />
                             <Route path="products" element={<ProductListPage />} />
                             <Route path="products/new" element={<NewProductPage />} />
+                            <Route path="products/:id" element={<ProductDetailPage />} />
+                            <Route path="products/:id/edit" element={<ProductEditPage />} />
                             <Route path="batches" element={<BatchListPage />} />
                             <Route path="batches/new" element={<NewBatchPage />} />
                             <Route path="batches/:batchId" element={<BatchDetailsPage />} />
