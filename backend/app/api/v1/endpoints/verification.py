@@ -248,3 +248,46 @@ def get_cosmetics_data(product):
         "cruelty_free": True,
         "natural_percentage": 85.0
     }
+
+
+@router.post("/pack/{pack_id}/mark-used")
+async def mark_pack_as_used(
+    pack_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Mark a pack as USED after consumption
+    Only authenticated users (consumers, retailers, pharmacies) can mark packs as used
+    Once marked as used, the pack cannot be verified again (one-time use enforcement)
+    """
+    from app.models.batch import Pack, PackStatus
+    from datetime import datetime
+    
+    # Find the pack
+    pack = db.query(Pack).filter(Pack.pack_id == pack_id).first()
+    
+    if not pack:
+        raise HTTPException(status_code=404, detail="Pack not found")
+    
+    # Check if already used
+    if pack.status == PackStatus.USED:
+        raise HTTPException(
+            status_code=400, 
+            detail="This pack has already been marked as used"
+        )
+    
+    # Mark as used
+    pack.status = PackStatus.USED
+    pack.last_verified_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(pack)
+    
+    return {
+        "success": True,
+        "message": "Pack successfully marked as used. This product can no longer be verified.",
+        "pack_id": pack_id,
+        "status": "USED",
+        "marked_at": pack.last_verified_at.isoformat()
+    }

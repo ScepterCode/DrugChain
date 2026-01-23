@@ -1,3 +1,4 @@
+import React from 'react';
 
 // To avoid dependency errors if lucide not installed, using simple SVG.
 
@@ -22,9 +23,27 @@ interface VerificationResultProps {
         contact_info?: string;
     };
     onScanAnother: () => void;
+    onMarkAsUsed?: (packId: string) => void;
 }
 
-const VerificationResult: React.FC<VerificationResultProps> = ({ result, message, data, onScanAnother }) => {
+const VerificationResult: React.FC<VerificationResultProps> = ({ result, message, data, onScanAnother, onMarkAsUsed }) => {
+    const [markingAsUsed, setMarkingAsUsed] = React.useState(false);
+    const [markedAsUsed, setMarkedAsUsed] = React.useState(false);
+
+    const handleMarkAsUsed = async () => {
+        if (!data?.pack_id || !onMarkAsUsed) return;
+        
+        setMarkingAsUsed(true);
+        try {
+            await onMarkAsUsed(data.pack_id);
+            setMarkedAsUsed(true);
+        } catch (error) {
+            console.error('Failed to mark as used:', error);
+            alert('Failed to mark product as used. Please try again.');
+        } finally {
+            setMarkingAsUsed(false);
+        }
+    };
 
     const getStyles = () => {
         switch (result) {
@@ -191,16 +210,46 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                         )}
                         
                         {/* One-time scan confirmation */}
-                        <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
-                            <div className="flex items-center">
-                                <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span className="text-xs font-medium text-green-800">
-                                    ✅ This code has been marked as used to prevent counterfeiting
-                                </span>
+                        {!markedAsUsed ? (
+                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <svg className="h-4 w-4 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span className="text-xs font-medium text-yellow-800">
+                                            Have you consumed this product?
+                                        </span>
+                                    </div>
+                                    {onMarkAsUsed && data?.pack_id && (
+                                        <button
+                                            onClick={handleMarkAsUsed}
+                                            disabled={markingAsUsed}
+                                            className="ml-3 px-3 py-1 bg-yellow-600 text-white text-xs font-medium rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {markingAsUsed ? 'Marking...' : 'Mark as Used'}
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="mt-2 text-xs text-yellow-700">
+                                    Click "Mark as Used" after consuming to prevent counterfeit reuse
+                                </p>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span className="text-xs font-medium text-green-800">
+                                        ✅ This product has been marked as used and locked
+                                    </span>
+                                </div>
+                                <p className="mt-1 text-xs text-green-700">
+                                    This code can no longer be verified to prevent counterfeiting
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -169,6 +169,9 @@ const VerificationPage: React.FC = () => {
                         message={result.message}
                         data={result.data}
                         onScanAnother={handleReset}
+                        onMarkAsUsed={async (packId) => {
+                            await verificationService.markPackAsUsed(packId);
+                        }}
                     />
                 )}
 

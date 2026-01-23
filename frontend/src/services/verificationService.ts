@@ -103,5 +103,22 @@ export const verificationService = {
     // Legacy endpoint for backward compatibility
     verifyProduct: async (packId: string) => {
         return await verificationService.verifyPack(packId);
+    },
+
+    // Mark pack as used (consumed)
+    // Requires authentication - only logged-in users can mark packs as used
+    markPackAsUsed: async (packId: string) => {
+        const cleanId = packId.trim().toUpperCase();
+        
+        try {
+            const response = await api.post(`/verify/pack/${cleanId}/mark-used`);
+            return response.data;
+        } catch (error: any) {
+            console.error('[verificationService] Mark as used error:', error);
+            if (error.response && error.response.data) {
+                throw new Error(error.response.data.detail || 'Failed to mark pack as used');
+            }
+            throw error;
+        }
     }
 };
