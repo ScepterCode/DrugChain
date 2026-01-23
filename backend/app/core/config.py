@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
+    # Supabase Auth
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "https://aykzdgvdzmjhwsbjazon.supabase.co")
+    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+    SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
+    
     # Blockchain
     FABRIC_NETWORK_URL: str = os.getenv("FABRIC_NETWORK_URL", "grpc://localhost:7051")
     FABRIC_CHAINCODE_NAME: str = "drugchain"

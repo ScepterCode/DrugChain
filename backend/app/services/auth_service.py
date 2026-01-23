@@ -14,8 +14,7 @@ class AuthService:
     @staticmethod
     async def register_user(db: Session, user_data: UserCreate) -> dict:
         """Register a new user with organization"""
-        # NOTE: Email verification and audit logging temporarily disabled
-        # until database columns are added
+        from app.services.supabase_auth_service import supabase_auth
         
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -75,7 +74,7 @@ class AuthService:
                     detail=f"Invalid role: {user_data.role}"
                 )
             
-            # Create user (auto-verified until email verification is enabled)
+            # Create user (not verified until email is confirmed)
             new_user = User(
                 email=user_data.email,
                 password_hash=get_password_hash(user_data.password),
@@ -83,12 +82,19 @@ class AuthService:
                 phone_number=user_data.phone_number,
                 role=user_role,
                 organization_id=organization.organization_id if organization else None,
-                is_verified=True  # Auto-verify until email verification columns are added
+                is_verified=False  # Will be verified via Supabase email
             )
             
             db.add(new_user)
             db.commit()
             db.refresh(new_user)
+            
+            # Send verification email via Supabase
+            try:
+                await supabase_auth.send_verification_email(new_user.email)
+            except Exception as e:
+                # Log but don't fail registration if email fails
+                print(f"Email verification send failed: {e}")
             
             # Generate tokens
             access_token = create_access_token(
@@ -106,7 +112,8 @@ class AuthService:
                 "user": UserResponse.from_orm(new_user),
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "token_type": "bearer"
+                "token_type": "bearer",
+                "message": "Registration successful. Please check your email to verify your account."
             }
             
         except IntegrityError as e:
