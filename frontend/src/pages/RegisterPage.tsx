@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { register, clearError } from '../store/authSlice';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 
 const RegisterPage: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -135,9 +136,7 @@ const RegisterPage: React.FC = () => {
                                 onChange={handleChange}
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
                             />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Must be at least 8 characters with one uppercase letter and one number
-                            </p>
+                            <PasswordStrengthIndicator password={formData.password} />
                         </div>
 
                         <div>
