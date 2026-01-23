@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, deferred
 from app.db.session import Base
 import enum
 
@@ -29,19 +29,19 @@ class User(Base):
     # Email verification
     is_verified = Column(Boolean, default=False)
     email_verified_at = Column(DateTime)
-    email_verification_token = Column(String(255))
-    email_verification_token_expires = Column(DateTime)
+    email_verification_token = deferred(Column(String(255)))
+    email_verification_token_expires = deferred(Column(DateTime))
     
     # Password reset
-    password_reset_token = Column(String(255))
-    password_reset_token_expires = Column(DateTime)
-    password_changed_at = Column(DateTime)
+    password_reset_token = deferred(Column(String(255)))
+    password_reset_token_expires = deferred(Column(DateTime))
+    password_changed_at = deferred(Column(DateTime))
     
     # Account security
     two_factor_enabled = Column(Boolean, default=False)
     two_factor_secret = Column(String(255))  # Encrypted TOTP secret
-    failed_login_attempts = Column(Integer, default=0)
-    account_locked_until = Column(DateTime)
+    failed_login_attempts = deferred(Column(Integer, default=0))
+    account_locked_until = deferred(Column(DateTime))
     
     # Timestamps
     last_login = Column(DateTime)
