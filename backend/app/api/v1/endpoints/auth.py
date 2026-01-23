@@ -144,3 +144,179 @@ async def logout():
         "success": True,
         "message": "Logged out successfully. Please discard your tokens."
     }
+
+
+@router.post("/request-password-reset")
+async def request_password_reset(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Request password reset email
+    
+    Always returns success to prevent email enumeration
+    """
+    from app.services.email_service import EmailService
+    from app.services.audit_service import AuditService
+    
+    user = db.query(User).filter(User.email == email).first()
+    
+    if user:
+        # Generate reset token
+        reset_token = EmailService.generate_token()
+        user.password_reset_token = reset_token
+        user.password_reset_token_expires = EmailService.generate_token_expiry(hours=1)
+        db.commit()
+        
+        # Send reset email
+        await EmailService.send_password_reset_email(email, reset_token, user.full_name)
+        
+        # Log the request
+        AuditService.log_password_reset_request(db, email)
+    
+    # Always return success to prevent email enumeration
+    return {
+        "success": True,
+        "message": "If an account exists with this email, a password reset link has been sent"
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    token: str,
+    new_password: str,
+    db: Session = Depends(get_db)
+):
+    """Reset password using reset token"""
+    from datetime import datetime
+    from app.services.password_policy import PasswordPolicy
+    from app.services.audit_service import AuditService
+    
+    # Validate new password
+    is_valid, errors = PasswordPolicy.validate_password(new_password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"message": "Password does not meet requirements", "errors": errors}
+        )
+    
+    # Find user with valid token
+    user = db.query(User).filter(
+        User.password_reset_token == token,
+        User.password_reset_token_expires > datetime.utcnow()
+    ).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Update password
+    user.password_hash = get_password_hash(new_password)
+    user.password_reset_token = None
+    user.password_reset_token_expires = None
+    user.password_changed_at = datetime.utcnow()
+    user.failed_login_attempts = 0  # Reset failed attempts
+    user.account_locked_until = None  # Unlock account if locked
+    
+    db.commit()
+    
+    # Log password change
+    AuditService.log_password_change(db, str(user.user_id))
+    
+    return {
+        "success": True,
+        "message": "Password reset successfully. You can now login with your new password"
+    }
+
+
+@router.post("/verify-email")
+async def verify_email(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """Verify email using verification token"""
+    from datetime import datetime
+    from app.services.email_service import EmailService
+    
+    # Find user with valid token
+    user = db.query(User).filter(
+        User.email_verification_token == token,
+        User.email_verification_token_expires > datetime.utcnow()
+    ).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Mark email as verified
+    user.is_verified = True
+    user.email_verified_at = datetime.utcnow()
+    user.email_verification_token = None
+    user.email_verification_token_expires = None
+    
+    db.commit()
+    
+    # Send welcome email
+    await EmailService.send_welcome_email(user.email, user.full_name)
+    
+    return {
+        "success": True,
+        "message": "Email verified successfully! You can now access all features"
+    }
+
+
+@router.post("/resend-verification")
+async def resend_verification_email(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """Resend email verification"""
+    from app.services.email_service import EmailService
+    
+    user = db.query(User).filter(User.email == email).first()
+    
+    if not user:
+        # Don't reveal if email exists
+        return {
+            "success": True,
+            "message": "If an account exists with this email, a verification email has been sent"
+        }
+    
+    if user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already verified"
+        )
+    
+    # Generate new token
+    verification_token = EmailService.generate_token()
+    user.email_verification_token = verification_token
+    user.email_verification_token_expires = EmailService.generate_token_expiry(hours=24)
+    db.commit()
+    
+    # Send verification email
+    await EmailService.send_verification_email(user.email, verification_token, user.full_name)
+    
+    return {
+        "success": True,
+        "message": "Verification email sent successfully"
+    }
+
+
+@router.post("/validate-password")
+async def validate_password(password: str):
+    """Validate password against policy (for frontend validation)"""
+    from app.services.password_policy import PasswordPolicy
+    
+    is_valid, errors = PasswordPolicy.validate_password(password)
+    strength = PasswordPolicy.get_password_strength(password)
+    
+    return {
+        "valid": is_valid,
+        "errors": errors,
+        "strength": strength
+    }
