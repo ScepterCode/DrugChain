@@ -234,7 +234,7 @@ const LandingPage: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">One-Time Verification</h3>
+                            <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">Single-Use Lock</h3>
                             <p className="mt-2 text-base text-gray-500 text-center">
                                 Each product can only be verified once, preventing counterfeit codes from being reused
                             </p>

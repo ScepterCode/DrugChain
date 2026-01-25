@@ -269,7 +269,7 @@ const DistributorDashboard: React.FC = () => {
                                 {isRetailer ? 'Dispense' : 'Transfer Out'}
                             </span>
                             <span className="text-xs text-gray-500">
-                                {isRetailer ? 'To customers' : 'To pharmacies'}
+                                {isRetailer ? 'To customers' : 'To retailers'}
                             </span>
                         </button>
                     </div>
