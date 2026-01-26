@@ -8,6 +8,7 @@ const ProductDetailPage: React.FC = () => {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -25,6 +26,46 @@ const ProductDetailPage: React.FC = () => {
             setError('Failed to load product details');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        if (!id || !product) return;
+        
+        if (!window.confirm('Are you sure you want to archive this product? It will not appear in batch creation until reactivated.')) {
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const updated = await productService.archiveProduct(id);
+            setProduct(updated);
+            setError(null);
+        } catch (err: any) {
+            console.error('Failed to archive product:', err);
+            setError('Failed to archive product. Please try again.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleReactivate = async () => {
+        if (!id || !product) return;
+        
+        if (!window.confirm('Are you sure you want to reactivate this product?')) {
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const updated = await productService.reactivateProduct(id);
+            setProduct(updated);
+            setError(null);
+        } catch (err: any) {
+            console.error('Failed to reactivate product:', err);
+            setError('Failed to reactivate product. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -71,6 +112,23 @@ const ProductDetailPage: React.FC = () => {
                     >
                         Edit Product
                     </Link>
+                    {product?.is_active ? (
+                        <button
+                            onClick={handleArchive}
+                            disabled={actionLoading}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50"
+                        >
+                            {actionLoading ? 'Archiving...' : 'Archive Product'}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleReactivate}
+                            disabled={actionLoading}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                        >
+                            {actionLoading ? 'Reactivating...' : 'Reactivate Product'}
+                        </button>
+                    )}
                     <button
                         onClick={() => navigate('/portal/products')}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

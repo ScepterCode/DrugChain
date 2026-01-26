@@ -2,23 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productService, Product } from '../../services/productService';
 
-const ProductList: React.FC = () => {
+interface ProductListProps {
+    showArchived?: boolean;
+}
+
+const ProductList: React.FC<ProductListProps> = ({ showArchived = false }) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [showArchived]);
 
     const fetchProducts = async () => {
         try {
             const data = await productService.getProducts();
-            setProducts(data);
+            
+            // Filter based on showArchived prop
+            const filteredData = showArchived 
+                ? data 
+                : data.filter(p => p.is_active);
+            
+            setProducts(filteredData);
             setError(null);
             
-            // Don't treat empty results as an error - this is a normal state
-            console.log(`Successfully loaded ${data.length} products`);
+            console.log(`Successfully loaded ${filteredData.length} products (showArchived: ${showArchived})`);
         } catch (err: any) {
             console.error('Failed to fetch products:', err);
             
@@ -107,28 +116,31 @@ const ProductList: React.FC = () => {
                                     </tr>
                                 ) : (
                                     products.map((product) => (
-                                        <tr key={product.product_id}>
+                                        <tr key={product.product_id} className={!product.is_active ? 'bg-gray-50' : ''}>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="text-sm font-medium text-gray-900">
+                                                    <div className={`text-sm font-medium ${product.is_active ? 'text-gray-900' : 'text-gray-500'}`}>
                                                         {product.product_name}
+                                                        {!product.is_active && (
+                                                            <span className="ml-2 text-xs text-gray-400">(Archived)</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{product.product_code}</div>
+                                                <div className={`text-sm ${product.is_active ? 'text-gray-900' : 'text-gray-500'}`}>{product.product_code}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{product.dosage}</div>
+                                                <div className={`text-sm ${product.is_active ? 'text-gray-900' : 'text-gray-500'}`}>{product.dosage}</div>
                                                 <div className="text-sm text-gray-500">{product.form}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {product.nafdac_registration_number || 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                                                     }`}>
-                                                    {product.is_active ? 'Active' : 'Inactive'}
+                                                    {product.is_active ? 'Active' : 'Archived'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

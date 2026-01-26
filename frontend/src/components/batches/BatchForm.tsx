@@ -25,12 +25,16 @@ const BatchForm: React.FC = () => {
     const loadProducts = async () => {
         try {
             const data = await productService.getProducts();
-            setProducts(data);
-            if (data.length > 0) {
-                setFormData(prev => ({ ...prev, product_id: data[0].product_id }));
+            
+            // Filter to only show active products
+            const activeProducts = data.filter(p => p.is_active);
+            
+            setProducts(activeProducts);
+            if (activeProducts.length > 0) {
+                setFormData(prev => ({ ...prev, product_id: activeProducts[0].product_id }));
             } else {
-                // No products available, but don't show error - allow manual input
-                console.warn("No products available for batch form");
+                // No active products available
+                console.warn("No active products available for batch form");
             }
         } catch (err: any) {
             console.error("Failed to load products for batch form:", err);

@@ -73,5 +73,17 @@ export const productService = {
     updateProduct: async (id: string, data: Partial<ProductCreateData>) => {
         const response = await api.put<Product>(`/products/${id}`, data);
         return response.data;
+    },
+
+    // Archive product
+    archiveProduct: async (id: string) => {
+        const response = await api.patch<Product>(`/products/${id}/archive`);
+        return response.data;
+    },
+
+    // Reactivate product
+    reactivateProduct: async (id: string) => {
+        const response = await api.patch<Product>(`/products/${id}/reactivate`);
+        return response.data;
     }
 };

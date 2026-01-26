@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.db.session import get_db
 from app.schemas import ProductCreate, ProductResponse
-from app.models import Product, User, Manufacturer
-from app.api.dependencies import require_role
+from app.models import Product, User, Manufacturer, UserRole
+from app.api.dependencies import require_role, get_current_user
 from typing import List
 
 router = APIRouter()
@@ -66,6 +67,7 @@ async def create_product(
 async def list_products(
     skip: int = 0,
     limit: int = 50,
+    include_archived: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["MANUFACTURER", "DISTRIBUTOR", "RETAILER", "REGULATOR"]))
 ):
@@ -74,12 +76,17 @@ async def list_products(
     - Manufacturers see only their products
     - Regulators see all products
     - Distributors and Pharmacies see all products (for ordering/selling)
+    - By default, only active products are shown. Set include_archived=true to see archived products.
     """
     query = db.query(Product)
     
     # Filter by manufacturer if user is a manufacturer
     if current_user.role.value == "MANUFACTURER":
         query = query.filter(Product.manufacturer_id == current_user.organization_id)
+    
+    # Filter by is_active unless include_archived is True
+    if not include_archived:
+        query = query.filter(Product.is_active == True)
     
     products = query.offset(skip).limit(limit).all()
     
@@ -163,4 +170,80 @@ async def update_product(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update product: {str(e)}"
+        )
+
+
+@router.patch("/{product_id}/archive", response_model=ProductResponse)
+async def archive_product(
+    product_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Archive a product (set is_active to False)"""
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
+    # Check if user owns this product
+    if current_user.role == UserRole.MANUFACTURER:
+        if product.manufacturer_id != current_user.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only archive your own products"
+            )
+    
+    product.is_active = False
+    product.updated_at = datetime.utcnow()
+    
+    try:
+        db.commit()
+        db.refresh(product)
+        return product
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to archive product: {str(e)}"
+        )
+
+
+@router.patch("/{product_id}/reactivate", response_model=ProductResponse)
+async def reactivate_product(
+    product_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Reactivate an archived product (set is_active to True)"""
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
+    # Check if user owns this product
+    if current_user.role == UserRole.MANUFACTURER:
+        if product.manufacturer_id != current_user.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only reactivate your own products"
+            )
+    
+    product.is_active = True
+    product.updated_at = datetime.utcnow()
+    
+    try:
+        db.commit()
+        db.refresh(product)
+        return product
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reactivate product: {str(e)}"
         )
