@@ -15,6 +15,15 @@ class ProductBase(BaseModel):
     industry_data: Optional[dict] = {}
     regulatory_registration: Optional[str] = None
     
+    # Additional fields from frontend form
+    brand_name: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    category_id: Optional[str] = None
+    model_number: Optional[str] = None
+    warranty_period_months: Optional[int] = None
+    risk_level: Optional[str] = "medium"
+    verification_complexity: Optional[str] = "standard"
+    
     # Legacy pharmaceutical fields (deprecated but kept for backward compatibility)
     dosage: Optional[str] = None
     form: Optional[str] = None

@@ -24,6 +24,15 @@ class Product(Base):
     # Generic regulatory field (replaces nafdac_registration_number)
     regulatory_registration = Column(String(100))
     
+    # Additional fields from frontend form
+    brand_name = Column(String(255))
+    country_of_origin = Column(String(100))
+    category_id = Column(String(100))
+    model_number = Column(String(100))
+    warranty_period_months = Column(Integer)
+    risk_level = Column(String(50), default="medium")
+    verification_complexity = Column(String(50), default="standard")
+    
     # DEPRECATED: Legacy pharmaceutical fields (kept for backward compatibility)
     # These should be migrated to industry_data for Healthcare products
     dosage = Column(String(100))  # DEPRECATED: Use industry_data.dosage

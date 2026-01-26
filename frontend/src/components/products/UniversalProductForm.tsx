@@ -45,9 +45,27 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
   useEffect(() => {
     loadIndustries();
     if (initialData) {
-      setFormData({ ...formData, ...initialData });
+      // Transform initialData to populate both direct fields and industry_data
+      const transformedData = { ...formData, ...initialData };
+      
+      // If this is a Healthcare product, populate industry_data from direct fields
+      if (initialData.industry_type === 'Healthcare' || !initialData.industry_type) {
+        const healthcareData = {
+          dosage: initialData.dosage || '',
+          form: initialData.form || '',
+          therapeutic_category: initialData.therapeutic_category || '',
+          requires_prescription: initialData.requires_prescription || false
+        };
+        
+        transformedData.industry_data = {
+          ...transformedData.industry_data,
+          electronics: healthcareData // Using electronics key as default for Healthcare
+        };
+      }
+      
+      setFormData(transformedData);
     }
-  }, []);
+  }, [initialData]);
 
   const loadIndustries = async () => {
     try {
@@ -136,7 +154,23 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      // Transform the form data to match the expected backend format
+      const industryKey = getIndustryDataKey(formData.industry_type);
+      const industryData = formData.industry_data[industryKey] || {};
+      
+      // For Healthcare products, map industry_data fields to direct fields for backward compatibility
+      const transformedData = {
+        ...formData,
+        // Map industry-specific fields to direct fields for backward compatibility
+        dosage: formData.industry_type === 'Healthcare' ? industryData.dosage : formData.dosage,
+        form: formData.industry_type === 'Healthcare' ? industryData.form : formData.form,
+        therapeutic_category: formData.industry_type === 'Healthcare' ? industryData.therapeutic_category : formData.therapeutic_category,
+        requires_prescription: formData.industry_type === 'Healthcare' ? industryData.requires_prescription : formData.requires_prescription,
+        // Keep industry_data for future use
+        industry_data: formData.industry_data
+      };
+      
+      await onSubmit(transformedData);
     } catch (error) {
       console.error('Failed to submit form:', error);
     } finally {

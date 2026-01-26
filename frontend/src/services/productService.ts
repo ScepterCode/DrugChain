@@ -16,6 +16,14 @@ export interface Product {
     manufacturer_id: string;
     is_active: boolean;
     created_at: string;
+    // New fields from UniversalProductForm
+    industry_type?: string;
+    industry_data?: any;
+    category_id?: string;
+    model_number?: string;
+    warranty_period_months?: number;
+    risk_level?: string;
+    verification_complexity?: string;
 }
 
 export interface ProductCreateData {
@@ -28,6 +36,17 @@ export interface ProductCreateData {
     requires_prescription?: boolean;
     description?: string;
     nafdac_registration_number?: string;
+    brand_name?: string;
+    country_of_origin?: string;
+    // New fields from UniversalProductForm
+    industry_type?: string;
+    industry_data?: any;
+    category_id?: string;
+    model_number?: string;
+    warranty_period_months?: number;
+    risk_level?: string;
+    verification_complexity?: string;
+}
 }
 
 export const productService = {
