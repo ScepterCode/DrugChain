@@ -41,10 +41,22 @@ async def create_product(
                 detail=f"Product with code '{product_data.product_code}' already exists"
             )
         
-        # Create product
+        # Create product with only safe fields (that exist in current database schema)
+        safe_data = {}
+        safe_fields = {
+            'product_code', 'product_name', 'description', 'industry_type', 
+            'industry_data', 'regulatory_registration', 'dosage', 'form', 
+            'active_ingredients', 'therapeutic_category', 'requires_prescription', 
+            'nafdac_registration_number'
+        }
+        
+        for field, value in product_data.dict().items():
+            if field in safe_fields:
+                safe_data[field] = value
+        
         new_product = Product(
             manufacturer_id=manufacturer.manufacturer_id,
-            **product_data.dict()
+            **safe_data
         )
         
         db.add(new_product)
@@ -154,9 +166,17 @@ async def update_product(
                 detail="You can only update your own products"
             )
     
-    # Update product fields
+    # Define fields that are safe to update (exist in current database schema)
+    safe_fields = {
+        'product_code', 'product_name', 'description', 'industry_type', 
+        'industry_data', 'regulatory_registration', 'dosage', 'form', 
+        'active_ingredients', 'therapeutic_category', 'requires_prescription', 
+        'nafdac_registration_number'
+    }
+    
+    # Update product fields - only update fields that exist in database
     for field, value in product_data.dict(exclude_unset=True).items():
-        if hasattr(product, field):
+        if field in safe_fields and hasattr(product, field):
             setattr(product, field, value)
     
     product.updated_at = datetime.utcnow()
