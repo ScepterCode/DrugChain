@@ -283,13 +283,13 @@ class VerificationService:
                 "pack_id": pack_id,
                 "product_name": product.product_name if product else "Unknown Product",
                 "product_code": product.product_code if product else "Unknown",
-                "manufacturer": "Licensed Manufacturer",  # TODO: Get actual manufacturer name
+                "manufacturer": batch.manufacturer.organization.organization_name if batch.manufacturer and batch.manufacturer.organization else "Licensed Manufacturer",
                 "batch_id": batch.batch_id,
                 "production_date": batch.production_date.isoformat(),
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verification_count": pack.verification_count,
                 "first_verified_at": pack.first_verified_at.isoformat(),
-                "regulatory_registration": product.regulatory_registration or product.nafdac_registration_number if product else None
+                "nafdac_reg": product.nafdac_registration_number or product.regulatory_registration if product else "Registered"
             }
         }
     
