@@ -6,15 +6,18 @@ import { logout } from '../store/authSlice';
 import NotificationDropdown from './NotificationDropdown';
 import BlockchainStatus from './BlockchainStatus';
 import EmailVerificationBanner from './EmailVerificationBanner';
+import SessionTimeoutWarning from './SessionTimeoutWarning';
+import { useMultiTabAuth } from '../hooks/useMultiTabAuth';
 
 const Layout: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state: RootState) => state.auth);
+    const { logoutAllTabs } = useMultiTabAuth();
 
     const handleLogout = () => {
-        dispatch(logout());
+        logoutAllTabs(); // This will logout from all tabs
         navigate('/login');
     };
 
@@ -139,6 +142,9 @@ const Layout: React.FC = () => {
                 <EmailVerificationBanner />
                 <Outlet />
             </main>
+            
+            {/* Session timeout warning modal */}
+            <SessionTimeoutWarning />
         </div>
     );
 };

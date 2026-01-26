@@ -88,6 +88,7 @@ export const authService = {
     logout() {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        // This will trigger storage event in other tabs
     },
 
     isAuthenticated(): boolean {

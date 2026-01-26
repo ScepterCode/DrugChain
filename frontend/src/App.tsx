@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import EmailVerificationRequiredPage from './pages/EmailVerificationRequiredPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import BatchListPage from './pages/batches/BatchListPage';
@@ -46,14 +47,47 @@ function App() {
                         {/* Protected routes */}
                         <Route path="/portal" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                             <Route index element={<Navigate to="/portal/dashboard" replace />} />
+                            <Route path="verify-email-required" element={<EmailVerificationRequiredPage />} />
                             <Route path="dashboard" element={<DashboardPage />} />
-                            <Route path="products" element={<ProductListPage />} />
-                            <Route path="products/new" element={<NewProductPage />} />
-                            <Route path="products/:id" element={<ProductDetailPage />} />
-                            <Route path="products/:id/edit" element={<ProductEditPage />} />
-                            <Route path="batches" element={<BatchListPage />} />
-                            <Route path="batches/new" element={<NewBatchPage />} />
-                            <Route path="batches/:batchId" element={<BatchDetailsPage />} />
+                            
+                            {/* Routes that require email verification */}
+                            <Route path="products" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <ProductListPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="products/new" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <NewProductPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="products/:id" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <ProductDetailPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="products/:id/edit" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <ProductEditPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="batches" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <BatchListPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="batches/new" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <NewBatchPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="batches/:batchId" element={
+                                <ProtectedRoute requireEmailVerification={true}>
+                                    <BatchDetailsPage />
+                                </ProtectedRoute>
+                            } />
+                            
+                            {/* Routes that don't require email verification */}
                             <Route path="analytics" element={<AnalyticsPage />} />
                             <Route path="users" element={<UserManagementPage />} />
                             <Route path="distributor" element={<SupplyChainDashboard />} />
