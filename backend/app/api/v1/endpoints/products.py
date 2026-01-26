@@ -120,3 +120,47 @@ async def get_product(
         )
     
     return ProductResponse.from_orm(product)
+
+
+@router.put("/{product_id}", response_model=ProductResponse)
+async def update_product(
+    product_id: str,
+    product_data: ProductCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update an existing product"""
+    # Check if product exists
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
+    # Check if user owns this product (manufacturer check)
+    if current_user.role == UserRole.MANUFACTURER:
+        if product.manufacturer_id != current_user.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update your own products"
+            )
+    
+    # Update product fields
+    for field, value in product_data.dict(exclude_unset=True).items():
+        if hasattr(product, field):
+            setattr(product, field, value)
+    
+    product.updated_at = datetime.utcnow()
+    
+    try:
+        db.commit()
+        db.refresh(product)
+        return product
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update product: {str(e)}"
+        )
