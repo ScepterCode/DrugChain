@@ -7,6 +7,7 @@ interface User {
     full_name: string;
     role: string;
     organization_id?: string;
+    is_verified?: boolean;
 }
 
 interface AuthState {

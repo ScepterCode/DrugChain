@@ -5,6 +5,7 @@ import { RootState } from '../store';
 import { logout } from '../store/authSlice';
 import NotificationDropdown from './NotificationDropdown';
 import BlockchainStatus from './BlockchainStatus';
+import EmailVerificationBanner from './EmailVerificationBanner';
 
 const Layout: React.FC = () => {
     const location = useLocation();
@@ -135,6 +136,7 @@ const Layout: React.FC = () => {
 
             {/* Main content */}
             <main>
+                <EmailVerificationBanner />
                 <Outlet />
             </main>
         </div>

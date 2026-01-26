@@ -42,15 +42,42 @@ export const authService = {
     },
 
     async register(data: RegisterData): Promise<any> {
-        const response = await api.post('/auth/register', data);
+        try {
+            const response = await api.post('/auth/register', data);
 
-        if (response.data.data) {
-            const { access_token, refresh_token } = response.data.data;
-            localStorage.setItem('access_token', access_token);
-            localStorage.setItem('refresh_token', refresh_token);
+            if (response.data.data) {
+                const { access_token, refresh_token } = response.data.data;
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('refresh_token', refresh_token);
+            }
+
+            return response.data;
+        } catch (error: any) {
+            // Improve error messages for common issues
+            if (error.response?.data?.detail) {
+                const detail = error.response.data.detail;
+                
+                // Handle duplicate registration number
+                if (detail.includes('duplicate key value violates unique constraint "organizations_registration_number_key"')) {
+                    throw new Error('This registration number is already in use. Please use a different registration number.');
+                }
+                
+                // Handle duplicate email
+                if (detail.includes('Email already registered')) {
+                    throw new Error('An account with this email already exists. Please use a different email or try logging in.');
+                }
+                
+                // Handle database integrity errors
+                if (detail.includes('Database integrity error')) {
+                    throw new Error('Registration failed due to duplicate information. Please check your registration number and email.');
+                }
+                
+                // Return original error if no specific handling
+                throw new Error(detail);
+            }
+            
+            throw error;
         }
-
-        return response.data;
     },
 
     async getCurrentUser(): Promise<any> {

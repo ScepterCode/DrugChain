@@ -16,6 +16,7 @@ const RegisterPage: React.FC = () => {
         organization_type: 'MANUFACTURER',
         registration_number: '',
     });
+    const [successMessage, setSuccessMessage] = useState('');
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -48,6 +49,7 @@ const RegisterPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         dispatch(clearError());
+        setSuccessMessage('');
 
         if (formData.password !== formData.confirmPassword) {
             alert('Passwords do not match');
@@ -69,7 +71,11 @@ const RegisterPage: React.FC = () => {
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-            navigate('/dashboard');
+            setSuccessMessage('Registration successful! Please check your email to verify your account.');
+            // Don't navigate immediately, let user see the success message
+            setTimeout(() => {
+                navigate('/portal/dashboard');
+            }, 2000);
         }
     };
 
@@ -87,6 +93,12 @@ const RegisterPage: React.FC = () => {
                         {error && (
                             <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
                                 {error}
+                            </div>
+                        )}
+
+                        {successMessage && (
+                            <div className="bg-green-50 border border-green-400 text-green-700 px-4 py-3 rounded">
+                                {successMessage}
                             </div>
                         )}
 
