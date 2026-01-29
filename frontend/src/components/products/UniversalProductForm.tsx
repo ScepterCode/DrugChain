@@ -28,7 +28,13 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
     verification_complexity: 'standard',
     nafdac_registration_number: '', // Add NAFDAC field
 
-    // Industry-specific data (pharmaceutical fields moved here)
+    // Healthcare/pharmaceutical fields (direct fields, not in industry_data)
+    dosage: '',
+    form: '',
+    therapeutic_category: '',
+    requires_prescription: false,
+
+    // Industry-specific data (for non-healthcare products)
     industry_data: {} as IndustrySpecificData,
 
     // Attributes and certifications
@@ -45,25 +51,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
   useEffect(() => {
     loadIndustries();
     if (initialData) {
-      // Transform initialData to populate both direct fields and industry_data
-      const transformedData = { ...formData, ...initialData };
-      
-      // If this is a Healthcare product, populate industry_data from direct fields
-      if (initialData.industry_type === 'Healthcare' || !initialData.industry_type) {
-        const healthcareData = {
-          dosage: initialData.dosage || '',
-          form: initialData.form || '',
-          therapeutic_category: initialData.therapeutic_category || '',
-          requires_prescription: initialData.requires_prescription || false
-        };
-        
-        transformedData.industry_data = {
-          ...transformedData.industry_data,
-          electronics: healthcareData // Using electronics key as default for Healthcare
-        };
-      }
-      
-      setFormData(transformedData);
+      // Simply merge the initial data with form data
+      setFormData({ ...formData, ...initialData });
     }
   }, [initialData]);
 
@@ -109,6 +98,7 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
       case 'Consumer Goods': return 'food';
       case 'Automotive': return 'automotive';
       case 'Personal Care': return 'cosmetics';
+      case 'Healthcare': return 'electronics'; // Using electronics as healthcare placeholder for now
       default: return 'electronics';
     }
   };
@@ -154,23 +144,9 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
 
     setLoading(true);
     try {
-      // Transform the form data to match the expected backend format
-      const industryKey = getIndustryDataKey(formData.industry_type);
-      const industryData = formData.industry_data[industryKey] || {};
-      
-      // For Healthcare products, map industry_data fields to direct fields for backward compatibility
-      const transformedData = {
-        ...formData,
-        // Map industry-specific fields to direct fields for backward compatibility
-        dosage: formData.industry_type === 'Healthcare' ? industryData.dosage : formData.dosage,
-        form: formData.industry_type === 'Healthcare' ? industryData.form : formData.form,
-        therapeutic_category: formData.industry_type === 'Healthcare' ? industryData.therapeutic_category : formData.therapeutic_category,
-        requires_prescription: formData.industry_type === 'Healthcare' ? industryData.requires_prescription : formData.requires_prescription,
-        // Keep industry_data for future use
-        industry_data: formData.industry_data
-      };
-      
-      await onSubmit(transformedData);
+      // For Healthcare products, use direct fields
+      // For other industries, keep the industry_data structure
+      await onSubmit(formData);
     } catch (error) {
       console.error('Failed to submit form:', error);
     } finally {
@@ -482,8 +458,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Dosage</label>
               <input
                 type="text"
-                value={(industryData as any).dosage || ''}
-                onChange={(e) => handleIndustryDataChange('dosage', e.target.value)}
+                value={formData.dosage || ''}
+                onChange={(e) => handleInputChange('dosage', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., 500mg"
               />
@@ -491,8 +467,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
             <div>
               <label className="block text-sm font-medium text-gray-700">Form</label>
               <select
-                value={(industryData as any).form || ''}
-                onChange={(e) => handleIndustryDataChange('form', e.target.value)}
+                value={formData.form || ''}
+                onChange={(e) => handleInputChange('form', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               >
                 <option value="">Select form</option>
@@ -508,8 +484,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
               <label className="block text-sm font-medium text-gray-700">Therapeutic Category</label>
               <input
                 type="text"
-                value={(industryData as any).therapeutic_category || ''}
-                onChange={(e) => handleIndustryDataChange('therapeutic_category', e.target.value)}
+                value={formData.therapeutic_category || ''}
+                onChange={(e) => handleInputChange('therapeutic_category', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 placeholder="e.g., Antibiotic"
               />
@@ -517,8 +493,8 @@ const UniversalProductForm: React.FC<UniversalProductFormProps> = ({
             <div className="flex items-center">
               <input
                 type="checkbox"
-                checked={(industryData as any).requires_prescription || false}
-                onChange={(e) => handleIndustryDataChange('requires_prescription', e.target.checked)}
+                checked={formData.requires_prescription || false}
+                onChange={(e) => handleInputChange('requires_prescription', e.target.checked)}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-900">Requires Prescription</label>
