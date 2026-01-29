@@ -41,13 +41,15 @@ async def create_product(
                 detail=f"Product with code '{product_data.product_code}' already exists"
             )
         
-        # Create product with only safe fields (that exist in current database schema)
+        # Create product with all available fields
         safe_data = {}
         safe_fields = {
             'product_code', 'product_name', 'description', 'industry_type', 
             'industry_data', 'regulatory_registration', 'dosage', 'form', 
             'active_ingredients', 'therapeutic_category', 'requires_prescription', 
-            'nafdac_registration_number'
+            'nafdac_registration_number', 'brand_name', 'country_of_origin',
+            'category_id', 'model_number', 'warranty_period_months', 
+            'risk_level', 'verification_complexity'
         }
         
         for field, value in product_data.dict().items():
@@ -166,12 +168,14 @@ async def update_product(
                 detail="You can only update your own products"
             )
     
-    # Define fields that are safe to update (exist in current database schema)
+    # Define fields that are safe to update (all available fields)
     safe_fields = {
         'product_code', 'product_name', 'description', 'industry_type', 
         'industry_data', 'regulatory_registration', 'dosage', 'form', 
         'active_ingredients', 'therapeutic_category', 'requires_prescription', 
-        'nafdac_registration_number'
+        'nafdac_registration_number', 'brand_name', 'country_of_origin',
+        'category_id', 'model_number', 'warranty_period_months', 
+        'risk_level', 'verification_complexity'
     }
     
     # Update product fields - only update fields that exist in database
