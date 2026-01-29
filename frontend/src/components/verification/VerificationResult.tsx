@@ -21,6 +21,14 @@ interface VerificationResultProps {
         reason?: string;
         allowed_action?: string;
         contact_info?: string;
+        // New fields from enhanced verification
+        brand_name?: string;
+        country_of_origin?: string;
+        dosage?: string;
+        form?: string;
+        description?: string;
+        batch_id?: string;
+        production_date?: string;
     };
     onScanAnother: () => void;
     onMarkAsUsed?: (packId: string) => void;
@@ -173,6 +181,30 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                                 <span className="block font-medium text-gray-500">Manufacturer</span>
                                 <span className="block font-bold text-gray-900">{data.manufacturer || 'Licensed Manufacturer'}</span>
                             </div>
+                            {data.brand_name && (
+                                <div>
+                                    <span className="block font-medium text-gray-500">Brand</span>
+                                    <span className="block font-bold text-gray-900">{data.brand_name}</span>
+                                </div>
+                            )}
+                            {data.dosage && (
+                                <div>
+                                    <span className="block font-medium text-gray-500">Dosage</span>
+                                    <span className="block font-bold text-gray-900">{data.dosage}</span>
+                                </div>
+                            )}
+                            {data.form && (
+                                <div>
+                                    <span className="block font-medium text-gray-500">Form</span>
+                                    <span className="block font-bold text-gray-900">{data.form}</span>
+                                </div>
+                            )}
+                            {data.country_of_origin && (
+                                <div>
+                                    <span className="block font-medium text-gray-500">Country of Origin</span>
+                                    <span className="block font-bold text-gray-900">{data.country_of_origin}</span>
+                                </div>
+                            )}
                             <div>
                                 <span className="block font-medium text-gray-500">Expiry</span>
                                 <span className="block font-bold text-gray-900">
@@ -184,6 +216,14 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                                 <span className="block font-bold text-gray-900">{data.nafdac_reg || 'Registered'}</span>
                             </div>
                         </div>
+                        
+                        {/* Show description if available */}
+                        {data.description && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                <span className="block font-medium text-gray-500 mb-2">Description</span>
+                                <p className="text-sm text-gray-700">{data.description}</p>
+                            </div>
+                        )}
                         
                         {/* Blockchain verification badge */}
                         {data?.blockchain_verified && (

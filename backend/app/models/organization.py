@@ -68,3 +68,4 @@ class Manufacturer(Base):
     # Relationships
     organization = relationship("Organization", back_populates="manufacturer")
     products = relationship("Product", back_populates="manufacturer")
+    batches = relationship("Batch", back_populates="manufacturer")

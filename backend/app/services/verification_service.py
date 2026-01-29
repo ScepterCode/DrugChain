@@ -176,13 +176,21 @@ class VerificationService:
                 "batch_id": batch.batch_id,
                 "product_name": product.product_name if product else "Unknown Product",
                 "product_code": product.product_code if product else "Unknown",
+                "manufacturer": batch.manufacturer.organization.organization_name if batch.manufacturer and batch.manufacturer.organization else "Licensed Manufacturer",
                 "packs_per_carton": carton.packs_per_carton,
                 "production_date": batch.production_date.isoformat(),
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verified_by_entity": auth_info["entity_name"],
                 "entity_type": auth_info["entity_type"],
                 "supply_chain_verified": True,
-                "blockchain_verified": True
+                "blockchain_verified": True,
+                # Add more product details
+                "brand_name": product.brand_name if product else None,
+                "country_of_origin": product.country_of_origin if product else None,
+                "dosage": product.dosage if product else None,
+                "form": product.form if product else None,
+                "nafdac_reg": product.nafdac_registration_number or product.regulatory_registration if product else "Registered",
+                "description": product.description if product else None
             }
         }
     
@@ -289,7 +297,13 @@ class VerificationService:
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verification_count": pack.verification_count,
                 "first_verified_at": pack.first_verified_at.isoformat(),
-                "nafdac_reg": product.nafdac_registration_number or product.regulatory_registration if product else "Registered"
+                "nafdac_reg": product.nafdac_registration_number or product.regulatory_registration if product else "Registered",
+                # Add more product details
+                "brand_name": product.brand_name if product else None,
+                "country_of_origin": product.country_of_origin if product else None,
+                "dosage": product.dosage if product else None,
+                "form": product.form if product else None,
+                "description": product.description if product else None
             }
         }
     

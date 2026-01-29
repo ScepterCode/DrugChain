@@ -40,6 +40,7 @@ class Batch(Base):
 
     # Relationships
     product = relationship("Product", back_populates="batches")
+    manufacturer = relationship("Manufacturer", foreign_keys=[manufacturer_id])
     cartons = relationship("Carton", back_populates="batch")
     packs = relationship("Pack", back_populates="batch")
 
