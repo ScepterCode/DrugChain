@@ -291,18 +291,18 @@ class VerificationService:
                 "pack_id": pack_id,
                 "product_name": product.product_name if product else "Unknown Product",
                 "product_code": product.product_code if product else "Unknown",
-                "manufacturer": self._get_manufacturer_name(batch),
+                "manufacturer": VerificationService._get_manufacturer_name(batch),
                 "batch_id": batch.batch_id,
                 "production_date": batch.production_date.isoformat(),
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verification_count": pack.verification_count,
                 "first_verified_at": pack.first_verified_at.isoformat(),
-                "nafdac_reg": self._get_nafdac_reg(product),
+                "nafdac_reg": VerificationService._get_nafdac_reg(product),
                 # Add more product details with fallbacks
-                "brand_name": getattr(product, 'brand_name', None) or self._generate_brand_name(product),
+                "brand_name": getattr(product, 'brand_name', None) or VerificationService._generate_brand_name(product),
                 "country_of_origin": getattr(product, 'country_of_origin', None) or "Nigeria",
-                "dosage": getattr(product, 'dosage', None) or self._generate_dosage(product),
-                "form": getattr(product, 'form', None) or self._generate_form(product),
+                "dosage": getattr(product, 'dosage', None) or VerificationService._generate_dosage(product),
+                "form": getattr(product, 'form', None) or VerificationService._generate_form(product),
                 "description": getattr(product, 'description', None) or f"Pharmaceutical product: {product.product_name if product else 'Unknown'}"
             }
         }
