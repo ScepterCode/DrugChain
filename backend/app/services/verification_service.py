@@ -15,33 +15,62 @@ class VerificationService:
     def verify_pack(db: Session, pack_id: str, ip_address: str = None, location: str = None, phone_number: str = None) -> dict:
         """
         Enhanced verification with blockchain integration
-        Provides dual-layer security: database + blockchain verification
+        ALWAYS returns complete product data from database + blockchain verification
         """
         try:
-            # Use blockchain-enhanced verification
-            blockchain_result = blockchain_service.verify_pack_with_blockchain(
-                db=db,
-                pack_id=pack_id,
-                verifier_id=phone_number or "anonymous",
-                location=location or "",
-                ip_address=ip_address or ""
-            )
-            
-            if blockchain_result.get("blockchain_verified"):
-                # Blockchain verification successful - use blockchain result
-                return blockchain_result
-            else:
-                # Fallback to traditional database verification
-                return VerificationService._verify_pack_database_only(
-                    db, pack_id, ip_address, location, phone_number
-                )
-                
-        except Exception as e:
-            logger.error(f"Blockchain verification failed for {pack_id}: {e}")
-            # Fallback to database-only verification
-            return VerificationService._verify_pack_database_only(
+            # ALWAYS get complete database verification first (this has all the product data)
+            database_result = VerificationService._verify_pack_database_only(
                 db, pack_id, ip_address, location, phone_number
             )
+            
+            # If database verification fails, return the error immediately
+            if not database_result.get("success"):
+                return database_result
+            
+            # Database verification successful - now add blockchain verification on top
+            try:
+                blockchain_result = blockchain_service.verify_pack_with_blockchain(
+                    db=db,
+                    pack_id=pack_id,
+                    verifier_id=phone_number or "anonymous",
+                    location=location or "",
+                    ip_address=ip_address or ""
+                )
+                
+                # Keep all the database product data, just add blockchain info
+                if blockchain_result.get("blockchain_verified"):
+                    database_result["blockchain_verified"] = True
+                    database_result["message"] = "✅ BLOCKCHAIN VERIFIED: This product is authentic and verified on the blockchain."
+                    
+                    # Add blockchain-specific data to the existing product data
+                    if database_result.get("data"):
+                        database_result["data"]["blockchain_verified"] = True
+                        database_result["data"]["blockchain_hash"] = blockchain_result.get("data", {}).get("blockchain_hash")
+                        database_result["data"]["blockchain_tx_id"] = blockchain_result.get("blockchain_tx_id")
+                        database_result["data"]["blockchain_status"] = blockchain_result.get("data", {}).get("blockchain_status")
+                else:
+                    database_result["blockchain_verified"] = False
+                    database_result["message"] = "✅ DATABASE VERIFIED: Product verified (blockchain temporarily unavailable)."
+                    
+            except Exception as blockchain_error:
+                logger.warning(f"Blockchain verification failed for {pack_id}: {blockchain_error}")
+                # Continue with database result, just mark blockchain as unavailable
+                database_result["blockchain_verified"] = False
+                database_result["message"] = "✅ DATABASE VERIFIED: Product verified (blockchain temporarily unavailable)."
+                if database_result.get("data"):
+                    database_result["data"]["blockchain_verified"] = False
+            
+            return database_result
+                
+        except Exception as e:
+            logger.error(f"Complete verification failed for {pack_id}: {e}")
+            return {
+                "success": False,
+                "verification_result": "ERROR",
+                "message": f"Verification system error: {str(e)}",
+                "blockchain_verified": False,
+                "data": None
+            }
     
     @staticmethod
     def verify_carton_with_authorization(db: Session, carton_id: str, ip_address: str = None, 
