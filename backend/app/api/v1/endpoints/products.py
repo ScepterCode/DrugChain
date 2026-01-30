@@ -157,82 +157,115 @@ async def update_product(
     current_user: User = Depends(get_current_user)
 ):
     """Update an existing product"""
-    # Check if product exists
-    product = db.query(Product).filter(Product.product_id == product_id).first()
+    import logging
+    logger = logging.getLogger(__name__)
     
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found"
-        )
-    
-    # Check if user owns this product (manufacturer check)
-    if current_user.role == UserRole.MANUFACTURER:
-        if product.manufacturer_id != current_user.organization_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only update your own products"
-            )
-    
-    # Define core fields that should always exist
-    core_fields = {
-        'product_code', 'product_name', 'description', 'industry_type', 
-        'industry_data', 'regulatory_registration'
-    }
-    
-    # Define optional fields that may not exist in database yet
-    optional_fields = {
-        'dosage', 'form', 'active_ingredients', 'therapeutic_category', 
-        'requires_prescription', 'nafdac_registration_number', 'brand_name', 
-        'country_of_origin', 'category_id', 'model_number', 'warranty_period_months', 
-        'risk_level', 'verification_complexity'
-    }
-    
-    # Update core fields first
-    updated_fields = []
-    for field, value in product_data.dict(exclude_unset=True).items():
-        if field in core_fields:
-            try:
-                setattr(product, field, value)
-                updated_fields.append(field)
-            except Exception as e:
-                print(f"Core field update failed {field}: {e}")
-                continue
-    
-    # Try to update optional fields, but don't fail if they don't exist
-    for field, value in product_data.dict(exclude_unset=True).items():
-        if field in optional_fields and hasattr(product, field):
-            try:
-                setattr(product, field, value)
-                updated_fields.append(field)
-            except Exception as e:
-                # Silently skip fields that cause database errors
-                print(f"Optional field skipped {field}: {e}")
-                continue
-    
-    product.updated_at = datetime.utcnow()
+    logger.info(f"=== PUT /products/{product_id} - UPDATE PRODUCT REQUEST ===")
+    logger.info(f"User: {current_user.user_id} ({current_user.role.value})")
+    logger.info(f"Organization: {current_user.organization_id}")
+    logger.info(f"Payload received: {product_data.dict()}")
     
     try:
+        # Check if product exists
+        product = db.query(Product).filter(Product.product_id == product_id).first()
+        
+        if not product:
+            logger.error(f"Product {product_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Product not found"
+            )
+        
+        logger.info(f"Found product: {product.product_name} (manufacturer: {product.manufacturer_id})")
+        
+        # Check if user owns this product (manufacturer check)
+        if current_user.role == UserRole.MANUFACTURER:
+            if product.manufacturer_id != current_user.organization_id:
+                logger.error(f"Authorization failed: user org {current_user.organization_id} != product org {product.manufacturer_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You can only update your own products"
+                )
+        
+        # Define core fields that should always exist
+        core_fields = {
+            'product_code', 'product_name', 'description', 'industry_type', 
+            'industry_data', 'regulatory_registration'
+        }
+        
+        # Define optional fields that may not exist in database yet
+        optional_fields = {
+            'dosage', 'form', 'active_ingredients', 'therapeutic_category', 
+            'requires_prescription', 'nafdac_registration_number', 'brand_name', 
+            'country_of_origin', 'category_id', 'model_number', 'warranty_period_months', 
+            'risk_level', 'verification_complexity'
+        }
+        
+        logger.info("Starting field updates...")
+        
+        # Update core fields first
+        updated_fields = []
+        for field, value in product_data.dict(exclude_unset=True).items():
+            if field in core_fields:
+                try:
+                    logger.info(f"Updating core field {field}: {value}")
+                    setattr(product, field, value)
+                    updated_fields.append(field)
+                except Exception as e:
+                    logger.error(f"Core field update failed {field}: {e}")
+                    continue
+        
+        # Try to update optional fields, but don't fail if they don't exist
+        for field, value in product_data.dict(exclude_unset=True).items():
+            if field in optional_fields:
+                if hasattr(product, field):
+                    try:
+                        logger.info(f"Updating optional field {field}: {value}")
+                        setattr(product, field, value)
+                        updated_fields.append(field)
+                    except Exception as e:
+                        logger.error(f"Optional field update failed {field}: {e}")
+                        continue
+                else:
+                    logger.warning(f"Field {field} does not exist in database model, skipping")
+        
+        logger.info(f"Successfully updated fields: {updated_fields}")
+        
+        product.updated_at = datetime.utcnow()
+        
+        logger.info("Attempting database commit...")
         db.commit()
         db.refresh(product)
+        
+        logger.info(f"Product {product_id} updated successfully")
         return ProductResponse.from_orm(product)
+        
+    except HTTPException:
+        logger.error("HTTPException occurred, re-raising")
+        raise
     except Exception as e:
+        logger.error(f"Unexpected error updating product {product_id}: {str(e)}", exc_info=True)
         db.rollback()
+        
         # More graceful error handling
         error_msg = str(e).lower()
         if "column" in error_msg and ("does not exist" in error_msg or "unknown column" in error_msg):
+            logger.info("Column error detected, attempting fallback update with basic fields only")
             # Still allow the update to succeed with available fields
             try:
                 # Try again with only basic fields
                 for field in ['product_name', 'description']:
                     if field in product_data.dict(exclude_unset=True):
                         setattr(product, field, product_data.dict()[field])
+                        logger.info(f"Fallback: updated {field}")
                 
                 product.updated_at = datetime.utcnow()
                 db.commit()
                 db.refresh(product)
+                logger.info("Fallback update successful")
                 return ProductResponse.from_orm(product)
-            except:
+            except Exception as fallback_error:
+                logger.error(f"Fallback update also failed: {fallback_error}")
                 pass
         
         raise HTTPException(
