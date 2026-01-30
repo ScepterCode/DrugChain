@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models.verification import VerificationEvent
 from app.models.batch import Pack, Batch, PackStatus, Carton
+from app.models.product import Product
+from app.models.organization import Organization, Manufacturer
 from app.services.blockchain_service import blockchain_service
 from app.services.supply_chain_tracking_service import SupplyChainTrackingService
 from datetime import datetime
@@ -197,9 +199,12 @@ class VerificationService:
     @staticmethod
     def _verify_pack_database_only(db: Session, pack_id: str, ip_address: str = None, location: str = None, phone_number: str = None) -> dict:
         """
-        Original database-only verification (fallback method)
-        Each pack can only be scanned once to prevent counterfeiting.
+        Strict database verification - NO FALLBACK LOGIC
+        Forces proper error handling when data relationships are broken
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # 1. Look up Pack
         pack = db.query(Pack).filter(Pack.pack_id == pack_id).first()
         
@@ -212,7 +217,89 @@ class VerificationService:
                 "data": None
             }
         
-        # 2. Check if pack has already been scanned (ONE-TIME SCAN LOGIC)
+        logger.info(f"Pack found: {pack_id}, batch_id: {pack.batch_id}")
+        
+        # 2. STRICT: Batch must exist
+        batch = db.query(Batch).filter(Batch.batch_id == pack.batch_id).first()
+        
+        if not batch:
+            logger.error(f"BROKEN RELATIONSHIP: Pack {pack_id} references non-existent batch {pack.batch_id}")
+            return {
+                "success": False,
+                "verification_result": "DATA_ERROR",
+                "message": "🚨 DATABASE ERROR: Product batch information missing. Contact system administrator.",
+                "blockchain_verified": False,
+                "data": {
+                    "error_type": "MISSING_BATCH",
+                    "pack_id": pack_id,
+                    "missing_batch_id": pack.batch_id,
+                    "debug_info": "Pack exists but batch relationship is broken"
+                }
+            }
+        
+        logger.info(f"Batch found: {batch.batch_id}, product_id: {batch.product_id}")
+        
+        # 3. STRICT: Product must exist
+        product = db.query(Product).filter(Product.product_id == batch.product_id).first()
+        
+        if not product:
+            logger.error(f"BROKEN RELATIONSHIP: Batch {batch.batch_id} references non-existent product {batch.product_id}")
+            return {
+                "success": False,
+                "verification_result": "DATA_ERROR",
+                "message": "🚨 DATABASE ERROR: Product information missing. Contact system administrator.",
+                "blockchain_verified": False,
+                "data": {
+                    "error_type": "MISSING_PRODUCT",
+                    "pack_id": pack_id,
+                    "batch_id": batch.batch_id,
+                    "missing_product_id": batch.product_id,
+                    "debug_info": "Batch exists but product relationship is broken"
+                }
+            }
+        
+        logger.info(f"Product found: {product.product_id}, name: {product.product_name}")
+        
+        # 4. STRICT: Manufacturer must exist
+        manufacturer = db.query(Manufacturer).filter(Manufacturer.manufacturer_id == batch.manufacturer_id).first()
+        
+        if not manufacturer:
+            logger.error(f"BROKEN RELATIONSHIP: Batch {batch.batch_id} references non-existent manufacturer {batch.manufacturer_id}")
+            return {
+                "success": False,
+                "verification_result": "DATA_ERROR",
+                "message": "🚨 DATABASE ERROR: Manufacturer information missing. Contact system administrator.",
+                "blockchain_verified": False,
+                "data": {
+                    "error_type": "MISSING_MANUFACTURER",
+                    "pack_id": pack_id,
+                    "batch_id": batch.batch_id,
+                    "missing_manufacturer_id": batch.manufacturer_id,
+                    "debug_info": "Batch exists but manufacturer relationship is broken"
+                }
+            }
+        
+        # 5. STRICT: Organization must exist for manufacturer
+        organization = db.query(Organization).filter(Organization.organization_id == manufacturer.manufacturer_id).first()
+        
+        if not organization:
+            logger.error(f"BROKEN RELATIONSHIP: Manufacturer {manufacturer.manufacturer_id} references non-existent organization")
+            return {
+                "success": False,
+                "verification_result": "DATA_ERROR",
+                "message": "🚨 DATABASE ERROR: Manufacturer organization missing. Contact system administrator.",
+                "blockchain_verified": False,
+                "data": {
+                    "error_type": "MISSING_ORGANIZATION",
+                    "pack_id": pack_id,
+                    "manufacturer_id": manufacturer.manufacturer_id,
+                    "debug_info": "Manufacturer exists but organization relationship is broken"
+                }
+            }
+        
+        logger.info(f"Complete data chain verified for pack {pack_id}")
+        
+        # 6. Check if pack has already been scanned (ONE-TIME SCAN LOGIC)
         if pack.status == PackStatus.USED:
             # Log suspicious activity - someone is trying to reuse a scanned code
             verification_event = VerificationEvent(
@@ -233,26 +320,15 @@ class VerificationService:
                 "blockchain_verified": False,
                 "data": {
                     "pack_id": pack_id,
+                    "product_name": product.product_name,
+                    "manufacturer": organization.organization_name,
                     "first_scanned_at": pack.first_verified_at.isoformat() if pack.first_verified_at else None,
                     "scan_count": pack.verification_count,
                     "alert_type": "REUSED_CODE"
                 }
             }
-            
-        # 3. Get Product Info via Batch
-        batch = pack.batch
-        if not batch:
-            return {
-                "success": False,
-                "verification_result": "INVALID",
-                "message": "⚠️ COUNTERFEIT ALERT: Product data corrupted. This may be counterfeit.",
-                "blockchain_verified": False,
-                "data": None
-            }
-            
-        product = batch.product
         
-        # 4. Check batch and pack status
+        # 7. Check batch and pack status
         verification_status = "GENUINE"
         message = "✅ AUTHENTIC: This product is genuine and safe to use."
         
@@ -263,14 +339,14 @@ class VerificationService:
             verification_status = "EXPIRED"
             message = "⚠️ EXPIRED PRODUCT: This product has passed its expiry date. Do not use!"
             
-        # 5. MARK PACK AS USED (One-time scan enforcement)
+        # 8. MARK PACK AS USED (One-time scan enforcement)
         pack.status = PackStatus.USED
         pack.verification_count += 1
         pack.last_verified_at = datetime.utcnow()
         if not pack.first_verified_at:
             pack.first_verified_at = datetime.utcnow()
             
-        # 6. Log Verification Event
+        # 9. Log Verification Event
         verification_event = VerificationEvent(
             pack_id=pack_id,
             verified_by_phone=phone_number,
@@ -282,6 +358,7 @@ class VerificationService:
         db.add(verification_event)
         db.commit()
         
+        # 10. Return COMPLETE data - NO FALLBACKS
         return {
             "success": True,
             "verification_result": verification_status,
@@ -289,112 +366,28 @@ class VerificationService:
             "blockchain_verified": False,
             "data": {
                 "pack_id": pack_id,
-                "product_name": product.product_name if product else "Unknown Product",
-                "product_code": product.product_code if product else "Unknown",
-                "manufacturer": VerificationService._get_manufacturer_name(batch),
+                "product_name": product.product_name,
+                "product_code": product.product_code,
+                "brand_name": product.brand_name,
+                "manufacturer": organization.organization_name,
                 "batch_id": batch.batch_id,
                 "production_date": batch.production_date.isoformat(),
                 "expiry_date": batch.expiry_date.isoformat(),
                 "verification_count": pack.verification_count,
                 "first_verified_at": pack.first_verified_at.isoformat(),
-                "nafdac_reg": VerificationService._get_nafdac_reg(product),
-                # Add more product details with fallbacks
-                "brand_name": getattr(product, 'brand_name', None) or VerificationService._generate_brand_name(product),
-                "country_of_origin": getattr(product, 'country_of_origin', None) or "Nigeria",
-                "dosage": getattr(product, 'dosage', None) or VerificationService._generate_dosage(product),
-                "form": getattr(product, 'form', None) or VerificationService._generate_form(product),
-                "description": getattr(product, 'description', None) or f"Pharmaceutical product: {product.product_name if product else 'Unknown'}"
+                "nafdac_reg": product.nafdac_registration_number or product.regulatory_registration,
+                "country_of_origin": product.country_of_origin,
+                "dosage": product.dosage,
+                "form": product.form,
+                "therapeutic_category": product.therapeutic_category,
+                "requires_prescription": product.requires_prescription,
+                "description": product.description,
+                "manufacturer_code": manufacturer.manufacturer_code,
+                "industry_type": product.industry_type,
+                "risk_level": product.risk_level,
+                "verification_complexity": product.verification_complexity
             }
         }
-    
-    @staticmethod
-    def _get_manufacturer_name(batch) -> str:
-        """Get manufacturer name with fallback"""
-        try:
-            if batch.manufacturer and batch.manufacturer.organization:
-                return batch.manufacturer.organization.organization_name
-            elif hasattr(batch, 'manufacturer_id'):
-                return f"Licensed Manufacturer (ID: {str(batch.manufacturer_id)[:8]})"
-            else:
-                return "Licensed Manufacturer"
-        except:
-            return "Licensed Manufacturer"
-    
-    @staticmethod
-    def _get_nafdac_reg(product) -> str:
-        """Get NAFDAC registration with fallback"""
-        if not product:
-            return "Registered"
-        
-        # Try new field first, then legacy field
-        nafdac_reg = getattr(product, 'nafdac_registration_number', None) or getattr(product, 'regulatory_registration', None)
-        if nafdac_reg:
-            return nafdac_reg
-        
-        # Generate based on product code
-        if hasattr(product, 'product_code'):
-            return f"NAFDAC-{product.product_code[:6].upper()}"
-        
-        return "Registered"
-    
-    @staticmethod
-    def _generate_brand_name(product) -> str:
-        """Generate brand name from product name"""
-        if not product or not hasattr(product, 'product_name'):
-            return "Generic Brand"
-        
-        name = product.product_name.lower()
-        if 'paracetamol' in name:
-            return "Panadol"
-        elif 'amoxicillin' in name:
-            return "Amoxil"
-        elif 'ibuprofen' in name:
-            return "Advil"
-        elif 'vitamin' in name:
-            return "VitaHealth"
-        else:
-            # Use first word of product name
-            return product.product_name.split()[0] + " Brand"
-    
-    @staticmethod
-    def _generate_dosage(product) -> str:
-        """Generate dosage from product name"""
-        if not product or not hasattr(product, 'product_name'):
-            return "500mg"
-        
-        name = product.product_name.lower()
-        if '500mg' in name:
-            return "500mg"
-        elif '250mg' in name:
-            return "250mg"
-        elif '100mg' in name:
-            return "100mg"
-        elif 'paracetamol' in name:
-            return "500mg"
-        elif 'amoxicillin' in name:
-            return "250mg"
-        elif 'ibuprofen' in name:
-            return "200mg"
-        else:
-            return "500mg"
-    
-    @staticmethod
-    def _generate_form(product) -> str:
-        """Generate form from product name"""
-        if not product or not hasattr(product, 'product_name'):
-            return "Tablet"
-        
-        name = product.product_name.lower()
-        if 'tablet' in name:
-            return "Tablet"
-        elif 'capsule' in name:
-            return "Capsule"
-        elif 'syrup' in name:
-            return "Syrup"
-        elif 'injection' in name:
-            return "Injection"
-        else:
-            return "Tablet"
     
     @staticmethod
     def verify_carton(db: Session, carton_id: str, ip_address: str = None, location: str = None, 

@@ -1,3 +1,4 @@
+# FORCE RESTART: Updated main.py to trigger deployment
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -9,10 +10,11 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# FORCE RESTART COMMENT - Updated 2026-01-30 15:35:00
 app = FastAPI(
     title="PackGuard API",
     version=settings.APP_VERSION,
-    description="PackGuard - Universal Product Authentication Platform",
+    description="PackGuard - Universal Product Authentication Platform - DATABASE COLUMNS FIXED",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     redirect_slashes=True  # Auto-redirect /products to /products/
@@ -94,13 +96,15 @@ async def deployment_test():
     import datetime
     return {
         "message": "Latest code deployed successfully!",
-        "deployment_timestamp": "2026-01-21T12:00:00Z",  # Updated timestamp
+        "deployment_timestamp": "2026-01-30T15:45:00Z",  # FORCE RESTART NOW: Updated timestamp
         "server_time": datetime.datetime.utcnow().isoformat(),
         "version": settings.APP_VERSION,
         "products_post_route_exists": True,  # Verification flag
         "categories_fix_applied": True,  # Verification flag
         "batches_routes_with_slash": True,  # NEW: Reverted to leading slashes
-        "supply_chain_routes_with_slash": True  # NEW: Reverted to leading slashes
+        "supply_chain_routes_with_slash": True,  # NEW: Reverted to leading slashes
+        "database_columns_fixed": True,  # NEW: Database columns added
+        "product_edit_should_work": True  # NEW: Product editing should work now
     }
 
 
