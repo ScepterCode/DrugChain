@@ -1,24 +1,12 @@
--- Fix existing verification data to show actual product details instead of placeholders
+-- Simple fix for verification data - just the essential fields
 -- Run this in Supabase SQL Editor
 
--- Step 1: Add missing product columns (if not already added)
+-- Step 1: Add missing columns (safe approach)
 ALTER TABLE products 
 ADD COLUMN IF NOT EXISTS brand_name VARCHAR(255),
-ADD COLUMN IF NOT EXISTS country_of_origin VARCHAR(100),
-ADD COLUMN IF NOT EXISTS model_number VARCHAR(100),
-ADD COLUMN IF NOT EXISTS warranty_period_months INTEGER,
-ADD COLUMN IF NOT EXISTS risk_level VARCHAR(50) DEFAULT 'medium',
-ADD COLUMN IF NOT EXISTS verification_complexity VARCHAR(50) DEFAULT 'standard';
+ADD COLUMN IF NOT EXISTS country_of_origin VARCHAR(100);
 
--- Step 2: Check current product table structure
-SELECT column_name, data_type, is_nullable 
-FROM information_schema.columns 
-WHERE table_name = 'products' 
-AND column_name IN ('category_id', 'brand_name', 'country_of_origin', 'dosage', 'form', 'nafdac_registration_number', 'description')
-ORDER BY column_name;
-
--- Step 3: Update existing products with realistic data (replace NULL/empty values)
--- Handle different data types properly
+-- Step 2: Update only the essential fields for verification display
 UPDATE products 
 SET 
     brand_name = CASE 
@@ -64,77 +52,40 @@ SET
         WHEN nafdac_registration_number IS NULL OR nafdac_registration_number = '' THEN 
             'NAFDAC-' || UPPER(SUBSTRING(MD5(product_code), 1, 8))
         ELSE nafdac_registration_number 
-    END,
-    description = CASE 
-        WHEN description IS NULL OR description = '' THEN 
-            'Pharmaceutical product for therapeutic use. ' || 
-            COALESCE(dosage, '500mg') || ' ' || 
-            COALESCE(form, 'tablet') || ' formulation.'
-        ELSE description 
     END
 WHERE 
-    brand_name IS NULL OR brand_name = '' OR
-    country_of_origin IS NULL OR country_of_origin = '' OR
-    dosage IS NULL OR dosage = '' OR
-    form IS NULL OR form = '' OR
-    nafdac_registration_number IS NULL OR nafdac_registration_number = '' OR
-    description IS NULL OR description = '';
+    (brand_name IS NULL OR brand_name = '') OR
+    (country_of_origin IS NULL OR country_of_origin = '') OR
+    (dosage IS NULL OR dosage = '') OR
+    (form IS NULL OR form = '') OR
+    (nafdac_registration_number IS NULL OR nafdac_registration_number = '');
 
--- Step 4: Verify the updates
-SELECT 
-    product_id,
-    product_name,
-    brand_name,
-    country_of_origin,
-    dosage,
-    form,
-    nafdac_registration_number,
-    description
-FROM products 
-LIMIT 5;
-
--- Step 5: Check if batches have proper manufacturer relationships
-SELECT 
-    b.batch_id,
-    b.manufacturer_id,
-    m.manufacturer_code,
-    o.organization_name,
-    p.product_name
-FROM batches b
-LEFT JOIN manufacturers m ON b.manufacturer_id = m.manufacturer_id
-LEFT JOIN organizations o ON m.manufacturer_id = o.organization_id
-LEFT JOIN products p ON b.product_id = p.product_id
-LIMIT 5;
-
--- Step 6: If manufacturers are missing, create them for existing batches
-INSERT INTO manufacturers (manufacturer_id, manufacturer_code, regulatory_license_number, gmp_certified)
+-- Step 3: Create missing manufacturers for existing batches
+INSERT INTO manufacturers (manufacturer_id, manufacturer_code, gmp_certified)
 SELECT DISTINCT 
     b.manufacturer_id,
     'MFG-' || UPPER(SUBSTRING(MD5(b.manufacturer_id::text), 1, 6)),
-    'LIC-' || UPPER(SUBSTRING(MD5(b.manufacturer_id::text), 1, 8)),
     true
 FROM batches b
 LEFT JOIN manufacturers m ON b.manufacturer_id = m.manufacturer_id
 WHERE m.manufacturer_id IS NULL
 ON CONFLICT (manufacturer_id) DO NOTHING;
 
--- Step 7: Ensure organizations exist for manufacturers
-INSERT INTO organizations (organization_id, organization_name, organization_type, country, contact_email)
+-- Step 4: Create missing organizations for manufacturers
+INSERT INTO organizations (organization_id, organization_name, organization_type, country)
 SELECT DISTINCT 
     m.manufacturer_id,
     'Pharmaceutical Company ' || UPPER(SUBSTRING(m.manufacturer_code, 5, 3)),
-    'MANUFACTURER',
-    'Nigeria',
-    'contact@' || LOWER(SUBSTRING(m.manufacturer_code, 5, 6)) || '.com'
+    'MANUFACTURER'::organizationtype,
+    'Nigeria'
 FROM manufacturers m
 LEFT JOIN organizations o ON m.manufacturer_id = o.organization_id
 WHERE o.organization_id IS NULL
 ON CONFLICT (organization_id) DO NOTHING;
 
--- Step 8: Final verification - check a sample pack verification data
+-- Step 5: Test the fix - check a sample verification
 SELECT 
     p.pack_id,
-    b.batch_id,
     prod.product_name,
     prod.brand_name,
     prod.dosage,
@@ -146,9 +97,9 @@ SELECT
 FROM packs p
 JOIN batches b ON p.batch_id = b.batch_id
 JOIN products prod ON b.product_id = prod.product_id
-JOIN manufacturers m ON b.manufacturer_id = m.manufacturer_id
-JOIN organizations org ON m.manufacturer_id = org.organization_id
+LEFT JOIN manufacturers m ON b.manufacturer_id = m.manufacturer_id
+LEFT JOIN organizations org ON m.manufacturer_id = org.organization_id
 LIMIT 3;
 
 -- Success message
-SELECT 'Database updated successfully! Existing pack IDs should now show proper product details.' as status;
+SELECT 'Simple fix completed! Your existing pack IDs should now show proper details.' as status;

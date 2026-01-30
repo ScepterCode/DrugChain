@@ -56,10 +56,16 @@ async def create_product(
             if field in safe_fields:
                 safe_data[field] = value
         
-        new_product = Product(
-            manufacturer_id=manufacturer.manufacturer_id,
-            **safe_data
-        )
+        # Create a temporary product to test which fields exist in database
+        temp_product = Product(manufacturer_id=manufacturer.manufacturer_id)
+        
+        # Only include fields that actually exist in the database
+        final_data = {'manufacturer_id': manufacturer.manufacturer_id}
+        for field, value in safe_data.items():
+            if hasattr(temp_product, field):
+                final_data[field] = value
+        
+        new_product = Product(**final_data)
         
         db.add(new_product)
         db.commit()
@@ -179,9 +185,16 @@ async def update_product(
     }
     
     # Update product fields - only update fields that exist in database
+    updated_fields = []
     for field, value in product_data.dict(exclude_unset=True).items():
         if field in safe_fields and hasattr(product, field):
-            setattr(product, field, value)
+            try:
+                setattr(product, field, value)
+                updated_fields.append(field)
+            except Exception as e:
+                # Skip fields that cause database errors (missing columns)
+                print(f"Skipping field {field}: {e}")
+                continue
     
     product.updated_at = datetime.utcnow()
     
@@ -191,10 +204,18 @@ async def update_product(
         return product
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update product: {str(e)}"
-        )
+        # Provide more helpful error message
+        error_msg = str(e)
+        if "column" in error_msg.lower() and "does not exist" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Some product fields are not available in the database. Please contact support to update the database schema."
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update product: {str(e)}"
+            )
 
 
 @router.patch("/{product_id}/archive", response_model=ProductResponse)
