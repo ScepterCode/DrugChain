@@ -281,7 +281,7 @@ const AboutPage: React.FC = () => {
                                 <h3 className="ml-4 text-lg font-medium text-gray-900">Pharmaceuticals</h3>
                             </div>
                             <p className="text-gray-600 mb-3">
-                                Our original focus - comprehensive drug verification with regulatory compliance and safety tracking.
+                                Our original focus - comprehensive product verification with regulatory compliance and safety tracking.
                             </p>
                             <div className="text-sm text-primary-600 font-medium">
                                 Market Impact: Life-threatening counterfeit medications
@@ -426,7 +426,7 @@ const AboutPage: React.FC = () => {
                         </div>
                         <div className="text-center">
                             <div className="text-4xl font-bold text-primary-600 mb-2">0</div>
-                            <div className="text-gray-600">Tolerance for counterfeit drugs</div>
+                            <div className="text-gray-600">Tolerance for counterfeit products</div>
                         </div>
                     </div>
                 </div>

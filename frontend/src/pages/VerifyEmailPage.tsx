@@ -42,6 +42,9 @@ const VerifyEmailPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-primary-600">PackGuard</h1>
                 </Link>
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Email Verification</h2>
+                <p className="mt-2 text-center text-sm text-gray-600">
+                    Product Verification Platform
+                </p>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

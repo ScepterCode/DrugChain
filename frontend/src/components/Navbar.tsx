@@ -57,7 +57,7 @@ const Navbar: React.FC = () => {
                                     to="/verify"
                                     className="text-gray-700 hover:text-primary-600 px-3 py-2"
                                 >
-                                    Verify Drug
+                                    Verify Product
                                 </Link>
                             </>
                         )}

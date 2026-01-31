@@ -37,7 +37,7 @@ const LoginPage: React.FC = () => {
                     Sign in to PackGuard
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    Drug Verification Platform
+                    Product Verification Platform
                 </p>
             </div>
 

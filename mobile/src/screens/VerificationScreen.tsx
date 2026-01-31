@@ -115,7 +115,7 @@ const VerificationScreen: React.FC = () => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Drug Verification</Text>
+                <Text style={styles.title}>Product Verification</Text>
                 <Text style={styles.subtitle}>Scan QR code to verify authenticity</Text>
             </View>
 
