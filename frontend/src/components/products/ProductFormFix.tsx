@@ -94,8 +94,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
       const submitData = { ...formData };
       
       // Convert warranty period to number if provided
-      if (submitData.warranty_period_months) {
-        submitData.warranty_period_months = parseInt(submitData.warranty_period_months as string);
+      if (submitData.warranty_period_months && submitData.warranty_period_months !== '') {
+        (submitData as any).warranty_period_months = parseInt(submitData.warranty_period_months);
+      } else {
+        delete (submitData as any).warranty_period_months;
       }
       
       // Ensure industry_data is an object
@@ -209,8 +211,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 >
                   <option value="">Select country</option>
                   {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.name}>
-                      {country.name}
+                    <option key={country} value={country}>
+                      {country}
                     </option>
                   ))}
                 </select>
