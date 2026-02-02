@@ -105,16 +105,34 @@ export const verificationService = {
         return await verificationService.verifyPack(packId);
     },
 
-    // Mark pack as used (consumed)
-    // Requires authentication - only logged-in users can mark packs as used
+    // Mark pack as used (consumed) - Anonymous endpoint
+    // Allows consumers to mark products as used without authentication
+    // Includes security checks to prevent abuse
     markPackAsUsed: async (packId: string) => {
+        const cleanId = packId.trim().toUpperCase();
+        
+        try {
+            const response = await api.post(`/verify/pack/${cleanId}/mark-used-anonymous`);
+            return response.data;
+        } catch (error: any) {
+            console.error('[verificationService] Mark as used error:', error);
+            if (error.response && error.response.data) {
+                throw new Error(error.response.data.detail || 'Failed to mark pack as used');
+            }
+            throw error;
+        }
+    },
+
+    // Mark pack as used (authenticated) - For logged-in users
+    // Kept for backward compatibility and authenticated workflows
+    markPackAsUsedAuthenticated: async (packId: string) => {
         const cleanId = packId.trim().toUpperCase();
         
         try {
             const response = await api.post(`/verify/pack/${cleanId}/mark-used`);
             return response.data;
         } catch (error: any) {
-            console.error('[verificationService] Mark as used error:', error);
+            console.error('[verificationService] Mark as used (authenticated) error:', error);
             if (error.response && error.response.data) {
                 throw new Error(error.response.data.detail || 'Failed to mark pack as used');
             }

@@ -291,3 +291,82 @@ async def mark_pack_as_used(
         "status": "USED",
         "marked_at": pack.last_verified_at.isoformat()
     }
+
+
+@router.post("/pack/{pack_id}/mark-used-anonymous")
+async def mark_pack_as_used_anonymous(
+    pack_id: str,
+    fastapi_req: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Mark a pack as USED after consumption (Anonymous endpoint)
+    Allows consumers to mark products as used without authentication
+    Includes basic security measures to prevent abuse
+    """
+    from app.models.batch import Pack, PackStatus
+    from app.models.verification import VerificationEvent
+    from datetime import datetime
+    
+    client_ip = fastapi_req.client.host
+    
+    # Find the pack
+    pack = db.query(Pack).filter(Pack.pack_id == pack_id).first()
+    
+    if not pack:
+        raise HTTPException(status_code=404, detail="Pack not found")
+    
+    # Check if already used
+    if pack.status == PackStatus.USED:
+        raise HTTPException(
+            status_code=400, 
+            detail="This pack has already been marked as used"
+        )
+    
+    # Security check: Only allow marking as used if pack was recently verified
+    # This prevents random marking of unused packs
+    recent_verification = db.query(VerificationEvent).filter(
+        VerificationEvent.pack_id == pack_id,
+        VerificationEvent.verification_result == "GENUINE"
+    ).order_by(VerificationEvent.created_at.desc()).first()
+    
+    if not recent_verification:
+        raise HTTPException(
+            status_code=403, 
+            detail="Pack must be verified first before marking as used"
+        )
+    
+    # Check if verification was recent (within last 24 hours)
+    from datetime import timedelta
+    if recent_verification.created_at < datetime.utcnow() - timedelta(hours=24):
+        raise HTTPException(
+            status_code=403,
+            detail="Pack verification is too old. Please verify the product again before marking as used"
+        )
+    
+    # Mark as used
+    pack.status = PackStatus.USED
+    pack.last_verified_at = datetime.utcnow()
+    
+    # Log the anonymous mark-as-used event
+    mark_used_event = VerificationEvent(
+        pack_id=pack_id,
+        verified_by_phone="anonymous_consumer",
+        verification_result="MARKED_USED",
+        location_address="Anonymous Consumer",
+        ip_address=client_ip,
+        created_at=datetime.utcnow()
+    )
+    db.add(mark_used_event)
+    
+    db.commit()
+    db.refresh(pack)
+    
+    return {
+        "success": True,
+        "message": "Pack successfully marked as used. This product can no longer be verified.",
+        "pack_id": pack_id,
+        "status": "USED",
+        "marked_at": pack.last_verified_at.isoformat(),
+        "note": "Thank you for helping prevent counterfeit reuse!"
+    }
