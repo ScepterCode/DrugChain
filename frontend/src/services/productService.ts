@@ -47,7 +47,6 @@ export interface ProductCreateData {
     risk_level?: string;
     verification_complexity?: string;
 }
-}
 
 export const productService = {
     // Get all products (tries authenticated endpoint first, falls back to empty array if all fail)
