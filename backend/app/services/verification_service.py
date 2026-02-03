@@ -368,8 +368,7 @@ class VerificationService:
             verification_status = "EXPIRED"
             message = "⚠️ EXPIRED PRODUCT: This product has passed its expiry date. Do not use!"
             
-        # 8. MARK PACK AS USED (One-time scan enforcement)
-        pack.status = PackStatus.USED
+        # 8. UPDATE VERIFICATION COUNT (but don't mark as USED yet)
         pack.verification_count += 1
         pack.last_verified_at = datetime.utcnow()
         if not pack.first_verified_at:
@@ -414,7 +413,10 @@ class VerificationService:
                 "manufacturer_code": manufacturer.manufacturer_code,
                 "industry_type": product.industry_type,
                 "risk_level": product.risk_level,
-                "verification_complexity": product.verification_complexity
+                "verification_complexity": product.verification_complexity,
+                # Add pack status information
+                "pack_status": pack.status.value,
+                "is_used": pack.status == PackStatus.USED
             }
         }
     

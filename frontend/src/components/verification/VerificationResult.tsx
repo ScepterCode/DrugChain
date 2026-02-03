@@ -29,6 +29,11 @@ interface VerificationResultProps {
         description?: string;
         batch_id?: string;
         production_date?: string;
+        // Pack status information
+        first_verified_at?: string;
+        last_verified_at?: string;
+        pack_status?: string;
+        is_used?: boolean;
     };
     onScanAnother: () => void;
     onMarkAsUsed?: (packId: string) => void;
@@ -37,6 +42,12 @@ interface VerificationResultProps {
 const VerificationResult: React.FC<VerificationResultProps> = ({ result, message, data, onScanAnother, onMarkAsUsed }) => {
     const [markingAsUsed, setMarkingAsUsed] = React.useState(false);
     const [markedAsUsed, setMarkedAsUsed] = React.useState(false);
+    const [markAsUsedSuccess, setMarkAsUsedSuccess] = React.useState(false);
+
+    // Check if pack is already used based on backend data
+    const isPackAlreadyUsed = React.useMemo(() => {
+        return data?.is_used === true || data?.pack_status === 'USED';
+    }, [data]);
 
     const handleMarkAsUsed = async () => {
         if (!data?.pack_id || !onMarkAsUsed) return;
@@ -45,9 +56,16 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
         try {
             await onMarkAsUsed(data.pack_id);
             setMarkedAsUsed(true);
-        } catch (error) {
+            setMarkAsUsedSuccess(true);
+        } catch (error: any) {
             console.error('Failed to mark as used:', error);
-            alert('Failed to mark product as used. Please try again.');
+            // Check if error is because pack is already used
+            if (error.message?.includes('already been marked as used') || error.message?.includes('already marked as used')) {
+                setMarkedAsUsed(true);
+                setMarkAsUsedSuccess(true);
+            } else {
+                alert('Failed to mark product as used. Please try again.');
+            }
         } finally {
             setMarkingAsUsed(false);
         }
@@ -249,8 +267,8 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                             </div>
                         )}
                         
-                        {/* One-time scan confirmation */}
-                        {!markedAsUsed ? (
+                        {/* Mark as Used Section */}
+                        {!isPackAlreadyUsed && !markedAsUsed ? (
                             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
@@ -275,18 +293,35 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                                     Click "Mark as Used" after consuming to prevent counterfeit reuse
                                 </p>
                             </div>
-                        ) : (
+                        ) : markAsUsedSuccess ? (
                             <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
                                 <div className="flex items-center">
                                     <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                     <span className="text-xs font-medium text-green-800">
-                                        ✅ This product has been marked as used and locked
+                                        ✅ Product marked as used successfully!
                                     </span>
                                 </div>
                                 <p className="mt-1 text-xs text-green-700">
-                                    This code can no longer be verified to prevent counterfeiting
+                                    This code is now locked and cannot be verified again to prevent counterfeiting
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="h-4 w-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-xs font-medium text-gray-800">
+                                        This product was already marked as used
+                                    </span>
+                                </div>
+                                <p className="mt-1 text-xs text-gray-700">
+                                    {data?.first_verified_at 
+                                        ? `Originally marked as used on ${new Date(data.first_verified_at).toLocaleDateString()}`
+                                        : 'This code has been locked to prevent counterfeiting'
+                                    }
                                 </p>
                             </div>
                         )}

@@ -115,16 +115,30 @@ class BlockchainService:
     def verify_pack_on_blockchain(self, pack_id: str, verifier_id: str, 
                                  location: str = "", ip_address: str = "", 
                                  device_info: str = "") -> Dict:
-        """Verify a pack on the blockchain with one-time scan enforcement"""
+        """Verify a pack on the blockchain WITHOUT marking as used"""
         data = {
             "chaincode": self.chaincode_name,
             "channel": self.channel_name,
-            "method": "VerifyPack",
+            "method": "VerifyPackWithoutUsing",  # New method that doesn't mark as used
             "args": [pack_id, verifier_id, location, ip_address, device_info]
         }
         
         result = self._make_fabric_request('POST', 'invoke', data)
-        logger.info(f"Verified pack {pack_id} on blockchain: {result}")
+        logger.info(f"Verified pack {pack_id} on blockchain (without marking as used): {result}")
+        return result
+    
+    def mark_pack_as_used_on_blockchain(self, pack_id: str, verifier_id: str, 
+                                       location: str = "", ip_address: str = "") -> Dict:
+        """Mark a pack as used on the blockchain (separate from verification)"""
+        data = {
+            "chaincode": self.chaincode_name,
+            "channel": self.channel_name,
+            "method": "MarkPackAsUsed",  # New method specifically for marking as used
+            "args": [pack_id, verifier_id, location, ip_address]
+        }
+        
+        result = self._make_fabric_request('POST', 'invoke', data)
+        logger.info(f"Marked pack {pack_id} as used on blockchain: {result}")
         return result
     
     def get_pack_from_blockchain(self, pack_id: str) -> Dict:

@@ -232,8 +232,8 @@ func (s *DrugChainContract) CreatePack(ctx contractapi.TransactionContextInterfa
 	return ctx.GetStub().PutState(packId, packJSON)
 }
 
-// VerifyPack verifies a pack and enforces one-time scan logic
-func (s *DrugChainContract) VerifyPack(ctx contractapi.TransactionContextInterface, packId string, verifierId string, location string, ipAddress string, deviceInfo string) (*VerificationEvent, error) {
+// VerifyPackWithoutUsing verifies a pack WITHOUT marking it as used
+func (s *DrugChainContract) VerifyPackWithoutUsing(ctx contractapi.TransactionContextInterface, packId string, verifierId string, location string, ipAddress string, deviceInfo string) (*VerificationEvent, error) {
 	// Get pack from blockchain
 	packBytes, err := ctx.GetStub().GetState(packId)
 	if err != nil {
@@ -250,9 +250,9 @@ func (s *DrugChainContract) VerifyPack(ctx contractapi.TransactionContextInterfa
 		return nil, fmt.Errorf("failed to unmarshal pack: %v", err)
 	}
 
-	// Check if pack has already been verified (ONE-TIME SCAN LOGIC)
+	// Check if pack has already been marked as used
 	if pack.Status == "USED" {
-		// Already verified - SUSPICIOUS (potential counterfeit reuse)
+		// Already used - SUSPICIOUS (potential counterfeit reuse)
 		return s.createVerificationEvent(ctx, packId, verifierId, "SUSPICIOUS", location, ipAddress, deviceInfo)
 	}
 
@@ -280,14 +280,14 @@ func (s *DrugChainContract) VerifyPack(ctx contractapi.TransactionContextInterfa
 		}
 	}
 
-	// Update pack status to USED (enforce one-time scan)
-	pack.Status = "USED"
+	// Update verification count but DON'T mark as used
 	pack.VerificationCount++
 	if pack.FirstVerified == "" {
 		pack.FirstVerified = time.Now().UTC().Format(time.RFC3339)
 	}
+	// pack.Status remains ACTIVE
 
-	// Save updated pack
+	// Save updated pack (with incremented count but still ACTIVE)
 	updatedPackJSON, err := json.Marshal(pack)
 	if err != nil {
 		return nil, err
@@ -299,6 +299,63 @@ func (s *DrugChainContract) VerifyPack(ctx contractapi.TransactionContextInterfa
 
 	// Create verification event
 	return s.createVerificationEvent(ctx, packId, verifierId, verificationResult, location, ipAddress, deviceInfo)
+}
+
+// MarkPackAsUsed marks a pack as used (separate from verification)
+func (s *DrugChainContract) MarkPackAsUsed(ctx contractapi.TransactionContextInterface, packId string, verifierId string, location string, ipAddress string) error {
+	// Get pack from blockchain
+	packBytes, err := ctx.GetStub().GetState(packId)
+	if err != nil {
+		return fmt.Errorf("failed to read pack: %v", err)
+	}
+	if packBytes == nil {
+		return fmt.Errorf("pack %s does not exist", packId)
+	}
+
+	var pack Pack
+	err = json.Unmarshal(packBytes, &pack)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal pack: %v", err)
+	}
+
+	// Check if already used
+	if pack.Status == "USED" {
+		return fmt.Errorf("pack %s has already been marked as used", packId)
+	}
+
+	// Mark pack as used
+	pack.Status = "USED"
+
+	// Save updated pack
+	updatedPackJSON, err := json.Marshal(pack)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(packId, updatedPackJSON)
+	if err != nil {
+		return err
+	}
+
+	// Create verification event for marking as used
+	eventId := fmt.Sprintf("VE-USED-%s-%d", packId, time.Now().UnixNano())
+	
+	event := VerificationEvent{
+		EventID:            eventId,
+		PackID:             packId,
+		VerifierID:         verifierId,
+		VerificationResult: "MARKED_AS_USED",
+		Location:           location,
+		IPAddress:          ipAddress,
+		Timestamp:          time.Now().UTC().Format(time.RFC3339),
+		DeviceInfo:         "User marked as consumed",
+	}
+
+	eventJSON, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(eventId, eventJSON)
 }
 
 // createVerificationEvent creates and stores a verification event

@@ -262,7 +262,11 @@ async def mark_pack_as_used(
     Once marked as used, the pack cannot be verified again (one-time use enforcement)
     """
     from app.models.batch import Pack, PackStatus
+    from app.services.blockchain_service import blockchain_service
     from datetime import datetime
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     # Find the pack
     pack = db.query(Pack).filter(Pack.pack_id == pack_id).first()
@@ -277,9 +281,22 @@ async def mark_pack_as_used(
             detail="This pack has already been marked as used"
         )
     
-    # Mark as used
+    # Mark as used in database
     pack.status = PackStatus.USED
     pack.last_verified_at = datetime.utcnow()
+    
+    # Mark as used on blockchain to keep them in sync
+    try:
+        blockchain_result = blockchain_service.mark_pack_as_used_on_blockchain(
+            pack_id=pack_id,
+            verifier_id=f"user_{current_user.user_id}",
+            location="Consumer App",
+            ip_address="authenticated_user"
+        )
+        logger.info(f"Pack {pack_id} marked as used on blockchain: {blockchain_result}")
+    except Exception as e:
+        logger.warning(f"Failed to mark pack {pack_id} as used on blockchain: {e}")
+        # Continue with database update even if blockchain fails
     
     db.commit()
     db.refresh(pack)
@@ -289,7 +306,8 @@ async def mark_pack_as_used(
         "message": "Pack successfully marked as used. This product can no longer be verified.",
         "pack_id": pack_id,
         "status": "USED",
-        "marked_at": pack.last_verified_at.isoformat()
+        "marked_at": pack.last_verified_at.isoformat(),
+        "blockchain_synced": True
     }
 
 
@@ -306,8 +324,11 @@ async def mark_pack_as_used_anonymous(
     """
     from app.models.batch import Pack, PackStatus
     from app.models.verification import VerificationEvent
+    from app.services.blockchain_service import blockchain_service
     from datetime import datetime
+    import logging
     
+    logger = logging.getLogger(__name__)
     client_ip = fastapi_req.client.host
     
     # Find the pack
@@ -344,9 +365,22 @@ async def mark_pack_as_used_anonymous(
             detail="Pack verification is too old. Please verify the product again before marking as used"
         )
     
-    # Mark as used
+    # Mark as used in database
     pack.status = PackStatus.USED
     pack.last_verified_at = datetime.utcnow()
+    
+    # Mark as used on blockchain to keep them in sync
+    try:
+        blockchain_result = blockchain_service.mark_pack_as_used_on_blockchain(
+            pack_id=pack_id,
+            verifier_id="anonymous_consumer",
+            location="Consumer App",
+            ip_address=client_ip
+        )
+        logger.info(f"Pack {pack_id} marked as used on blockchain: {blockchain_result}")
+    except Exception as e:
+        logger.warning(f"Failed to mark pack {pack_id} as used on blockchain: {e}")
+        # Continue with database update even if blockchain fails
     
     # Log the anonymous mark-as-used event
     mark_used_event = VerificationEvent(
@@ -368,5 +402,6 @@ async def mark_pack_as_used_anonymous(
         "pack_id": pack_id,
         "status": "USED",
         "marked_at": pack.last_verified_at.isoformat(),
-        "note": "Thank you for helping prevent counterfeit reuse!"
+        "note": "Thank you for helping prevent counterfeit reuse!",
+        "blockchain_synced": True
     }
