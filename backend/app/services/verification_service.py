@@ -5,7 +5,7 @@ from app.models.product import Product
 from app.models.organization import Organization, Manufacturer
 from app.services.blockchain_service import blockchain_service
 from app.services.supply_chain_tracking_service import SupplyChainTrackingService
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ class VerificationService:
         if batch.status.value == "RECALLED":
             verification_status = "RECALLED"
             message = "🚨 RECALLED CARTON: This carton contains recalled products. Do not distribute!"
-        elif batch.expiry_date < datetime.utcnow().date():
+        elif batch.expiry_date < datetime.now(timezone.utc).date():
             verification_status = "EXPIRED"
             message = "⚠️ EXPIRED CARTON: Products in this carton have expired."
         
@@ -178,13 +178,13 @@ class VerificationService:
             verification_result=verification_status,
             location_address=location,
             ip_address=ip_address,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         db.add(verification_event)
         
         # Update carton tracking
         carton.current_holder_id = auth_info.get("entity_id")  # If available
-        carton.updated_at = datetime.utcnow()
+        carton.updated_at = datetime.now(timezone.utc)
         db.commit()
         
         # Log blockchain supply chain event
@@ -337,7 +337,7 @@ class VerificationService:
                 verification_result="SUSPICIOUS",
                 location_address=location,
                 ip_address=ip_address,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.add(verification_event)
             db.commit()
@@ -364,15 +364,15 @@ class VerificationService:
         if batch.status.value == "RECALLED" or pack.status == PackStatus.RECALLED:
             verification_status = "RECALLED"
             message = "🚨 RECALLED PRODUCT: This product has been recalled by the manufacturer. Do not use!"
-        elif batch.expiry_date < datetime.utcnow().date():
+        elif batch.expiry_date < datetime.now(timezone.utc).date():
             verification_status = "EXPIRED"
             message = "⚠️ EXPIRED PRODUCT: This product has passed its expiry date. Do not use!"
             
         # 8. UPDATE VERIFICATION COUNT (but don't mark as USED yet)
         pack.verification_count += 1
-        pack.last_verified_at = datetime.utcnow()
+        pack.last_verified_at = datetime.now(timezone.utc)
         if not pack.first_verified_at:
-            pack.first_verified_at = datetime.utcnow()
+            pack.first_verified_at = datetime.now(timezone.utc)
             
         # 9. Log Verification Event
         verification_event = VerificationEvent(
@@ -381,7 +381,7 @@ class VerificationService:
             verification_result=verification_status,
             location_address=location,
             ip_address=ip_address,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         db.add(verification_event)
         db.commit()
@@ -466,7 +466,7 @@ class VerificationService:
                 "message": result.get("message", "Verification completed"),
                 "details": result.get("data", {}),
                 "blockchain_verified": result.get("blockchain_verified", False),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -478,5 +478,5 @@ class VerificationService:
                 "message": f"Verification failed: {str(e)}",
                 "details": {},
                 "blockchain_verified": False,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
+from datetime import datetime, timezone
 from app.models import User, Organization, Manufacturer, UserRole, OrganizationType
 from app.schemas import UserCreate, UserResponse
 from app.core.security import get_password_hash, verify_password, create_access_token, create_refresh_token
@@ -145,7 +146,7 @@ class AuthService:
             return None
         
         # Update last login
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         db.commit()
         
         return user

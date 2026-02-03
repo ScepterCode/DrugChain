@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from app.db.session import get_db
 from app.schemas import UserCreate, UserResponse, Token
 from app.services.auth_service import AuthService
@@ -203,7 +204,7 @@ async def reset_password(
     # Find user with valid token
     user = db.query(User).filter(
         User.password_reset_token == token,
-        User.password_reset_token_expires > datetime.utcnow()
+        User.password_reset_token_expires > datetime.now(timezone.utc)
     ).first()
     
     if not user:
@@ -216,7 +217,7 @@ async def reset_password(
     user.password_hash = get_password_hash(new_password)
     user.password_reset_token = None
     user.password_reset_token_expires = None
-    user.password_changed_at = datetime.utcnow()
+    user.password_changed_at = datetime.now(timezone.utc)
     user.failed_login_attempts = 0  # Reset failed attempts
     user.account_locked_until = None  # Unlock account if locked
     
@@ -243,7 +244,7 @@ async def verify_email(
     # Find user with valid token
     user = db.query(User).filter(
         User.email_verification_token == token,
-        User.email_verification_token_expires > datetime.utcnow()
+        User.email_verification_token_expires > datetime.now(timezone.utc)
     ).first()
     
     if not user:
@@ -254,7 +255,7 @@ async def verify_email(
     
     # Mark email as verified
     user.is_verified = True
-    user.email_verified_at = datetime.utcnow()
+    user.email_verified_at = datetime.now(timezone.utc)
     user.email_verification_token = None
     user.email_verification_token_expires = None
     

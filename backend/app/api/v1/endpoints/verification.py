@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, Request, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
+from datetime import datetime, timedelta, timezone
 from app.db.session import get_db
 from app.schemas.verification import VerificationRequest, VerificationResponse, CartonVerificationRequest
 from app.services.verification_service import VerificationService
@@ -283,7 +284,7 @@ async def mark_pack_as_used(
     
     # Mark as used in database
     pack.status = PackStatus.USED
-    pack.last_verified_at = datetime.utcnow()
+    pack.last_verified_at = datetime.now(timezone.utc)
     
     # Mark as used on blockchain to keep them in sync
     try:
@@ -358,8 +359,7 @@ async def mark_pack_as_used_anonymous(
         )
     
     # Check if verification was recent (within last 24 hours)
-    from datetime import timedelta
-    if recent_verification.created_at < datetime.utcnow() - timedelta(hours=24):
+    if recent_verification.created_at < datetime.now(timezone.utc) - timedelta(hours=24):
         raise HTTPException(
             status_code=403,
             detail="Pack verification is too old. Please verify the product again before marking as used"
@@ -367,7 +367,7 @@ async def mark_pack_as_used_anonymous(
     
     # Mark as used in database
     pack.status = PackStatus.USED
-    pack.last_verified_at = datetime.utcnow()
+    pack.last_verified_at = datetime.now(timezone.utc)
     
     # Mark as used on blockchain to keep them in sync
     try:
@@ -389,7 +389,7 @@ async def mark_pack_as_used_anonymous(
         verification_result="MARKED_USED",
         location_address="Anonymous Consumer",
         ip_address=client_ip,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(mark_used_event)
     
