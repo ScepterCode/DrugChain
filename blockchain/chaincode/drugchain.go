@@ -541,6 +541,43 @@ func (s *DrugChainContract) RecallBatch(ctx contractapi.TransactionContextInterf
 	return ctx.GetStub().PutState(batchId, updatedBatchJSON)
 }
 
+// CreateSupplyChainEvent creates a generic supply chain event (for carton tracking)
+func (s *DrugChainContract) CreateSupplyChainEvent(ctx contractapi.TransactionContextInterface, eventId string, entityId string, fromEntity string, toEntity string, eventType string, location string, timestamp string) error {
+	// Check if event already exists
+	existing, err := ctx.GetStub().GetState(eventId)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if existing != nil {
+		return fmt.Errorf("supply chain event %s already exists", eventId)
+	}
+
+	// Get transaction creator
+	creator, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		creator = "system" // fallback
+	}
+
+	// Create supply chain event
+	supplyChainEvent := SupplyChainEvent{
+		EventID:   eventId,
+		PackID:    entityId, // Can be pack ID or carton ID
+		FromEntity: fromEntity,
+		ToEntity:   toEntity,
+		EventType:  eventType,
+		Location:   location,
+		Timestamp:  timestamp,
+		Signature:  creator,
+	}
+
+	supplyChainJSON, err := json.Marshal(supplyChainEvent)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(eventId, supplyChainJSON)
+}
+
 func main() {
 	drugChainContract := new(DrugChainContract)
 

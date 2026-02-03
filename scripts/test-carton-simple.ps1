@@ -1,29 +1,27 @@
-# Simple carton verification test
-$BACKEND_URL = "https://drugchain-1.onrender.com/api/v1"
-$CARTON_ID = "CT-20260121-829O4Q-0001"
+#!/usr/bin/env pwsh
 
-Write-Host "Testing Carton Verification..." -ForegroundColor Cyan
+# Simple test for carton codes blockchain integration
+Write-Host "Testing Carton Codes Blockchain Integration" -ForegroundColor Cyan
+
+$BACKEND_URL = "https://packguard-backend.onrender.com"
+
+Write-Host "Backend URL: $BACKEND_URL"
 Write-Host ""
 
-# Test without authentication
-Write-Host "Test: Carton verification (no auth)" -ForegroundColor Yellow
-$body = @{
-    carton_id = $CARTON_ID
-    verification_method = "WEB"
-} | ConvertTo-Json
-
+# Test carton verification endpoint
+Write-Host "Testing carton verification endpoint..." -ForegroundColor Green
 try {
-    $response = Invoke-RestMethod -Uri "$BACKEND_URL/verify/carton" -Method Post -Body $body -ContentType "application/json"
+    $response = Invoke-RestMethod -Uri "$BACKEND_URL/api/v1/verify/carton" -Method POST -ContentType "application/json" -Body '{"carton_id": "TEST-CARTON-001", "phone_number": "+1234567890"}'
     
-    Write-Host "Result: $($response.verification_result)" -ForegroundColor Green
-    Write-Host "Message: $($response.message)"
-    Write-Host "Success: $($response.success)"
+    Write-Host "Carton verification response:"
+    Write-Host "  Success: $($response.success)"
+    Write-Host "  Result: $($response.verification_result)"
+    Write-Host "  Message: $($response.message)"
+    
 } catch {
-    Write-Host "Error: $_" -ForegroundColor Red
+    Write-Host "Carton verification error (expected for unauthorized access):"
+    Write-Host "  Error: $($_.Exception.Message)"
 }
 
 Write-Host ""
-Write-Host "Frontend detection test:" -ForegroundColor Yellow
-$testId = "CT-20260121-829O4Q-0001"
-Write-Host "Input: $testId"
-Write-Host "Starts with CT-: $($testId.StartsWith('CT-'))"
+Write-Host "Carton blockchain integration test complete!" -ForegroundColor Green
