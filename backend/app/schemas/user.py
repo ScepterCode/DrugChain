@@ -55,3 +55,7 @@ class TokenData(BaseModel):
     user_id: Optional[str] = None
     role: Optional[str] = None
     organization_id: Optional[str] = None
+
+
+class EmailRequest(BaseModel):
+    email: EmailStr

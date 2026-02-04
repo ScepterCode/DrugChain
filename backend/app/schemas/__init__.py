@@ -1,5 +1,5 @@
 # Import all schemas
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, TokenData
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, TokenData, EmailRequest
 from app.schemas.product import ProductCreate, ProductResponse, BatchCreate, BatchResponse, PackResponse
 from app.schemas.verification import VerificationRequest, VerificationResponse, SMSVerificationRequest, SMSVerificationResponse
 
@@ -9,6 +9,7 @@ __all__ = [
     "UserLogin",
     "Token",
     "TokenData",
+    "EmailRequest",
     "ProductCreate",
     "ProductResponse",
     "BatchCreate",

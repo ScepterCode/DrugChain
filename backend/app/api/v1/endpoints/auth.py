@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from app.db.session import get_db
-from app.schemas import UserCreate, UserResponse, Token
+from app.schemas import UserCreate, UserResponse, Token, EmailRequest
 from app.services.auth_service import AuthService
 from app.core.security import create_access_token, create_refresh_token
 from app.api.dependencies import get_current_user
@@ -149,7 +149,7 @@ async def logout():
 
 @router.post("/request-password-reset")
 async def request_password_reset(
-    email: str,
+    request: EmailRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -160,7 +160,7 @@ async def request_password_reset(
     from app.services.email_service import EmailService
     from app.services.audit_service import AuditService
     
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email == request.email).first()
     
     if user:
         # Generate reset token
@@ -170,10 +170,10 @@ async def request_password_reset(
         db.commit()
         
         # Send reset email
-        await EmailService.send_password_reset_email(email, reset_token, user.full_name)
+        await EmailService.send_password_reset_email(request.email, reset_token, user.full_name)
         
         # Log the request
-        AuditService.log_password_reset_request(db, email)
+        AuditService.log_password_reset_request(db, request.email)
     
     # Always return success to prevent email enumeration
     return {
@@ -272,13 +272,13 @@ async def verify_email(
 
 @router.post("/resend-verification")
 async def resend_verification_email(
-    email: str,
+    request: EmailRequest,
     db: Session = Depends(get_db)
 ):
     """Resend email verification"""
     from app.services.email_service import EmailService
     
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email == request.email).first()
     
     if not user:
         # Don't reveal if email exists
@@ -321,37 +321,6 @@ async def validate_password(password: str):
         "errors": errors,
         "strength": strength
     }
-
-
-@router.post("/resend-verification")
-async def resend_verification(
-    email: str,
-    db: Session = Depends(get_db)
-):
-    """Resend email verification using Supabase Auth"""
-    from app.services.supabase_auth_service import supabase_auth
-    
-    # Check if user exists
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    if user.is_verified:
-        return {"message": "Email already verified"}
-    
-    # Send verification email via Supabase
-    success = await supabase_auth.send_verification_email(email)
-    
-    if success:
-        return {"message": "Verification email sent successfully"}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification email"
-        )
 
 
 @router.post("/verify-email")
