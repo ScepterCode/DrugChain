@@ -173,7 +173,8 @@ class VerificationService:
         
         # Log carton verification (for supply chain tracking)
         verification_event = VerificationEvent(
-            pack_id=f"CARTON-{carton_id}",  # Use special format for carton verifications
+            pack_id=None,  # No pack_id for carton verifications
+            carton_id=carton_id,  # Use carton_id field
             verified_by_phone=phone_number,
             verification_result=verification_status,
             location_address=location,
