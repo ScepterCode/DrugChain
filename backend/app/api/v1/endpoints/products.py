@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from app.db.session import get_db
 from app.schemas import ProductCreate, ProductResponse
 from app.models import Product, User, Manufacturer, UserRole
@@ -320,7 +320,7 @@ async def update_product(
                 logger.info(f"Updated {field} for product {product_id}")
         
         # Always update timestamp
-        product.updated_at = datetime.utcnow()
+        product.updated_at = datetime.now(timezone.utc)
         
         # Commit changes
         db.commit()
@@ -364,7 +364,7 @@ async def archive_product(
         )
     
     product.is_active = False
-    product.updated_at = datetime.utcnow()
+    product.updated_at = datetime.now(timezone.utc)
     
     try:
         db.commit()
@@ -401,7 +401,7 @@ async def reactivate_product(
         )
     
     product.is_active = True
-    product.updated_at = datetime.utcnow()
+    product.updated_at = datetime.now(timezone.utc)
     
     try:
         db.commit()

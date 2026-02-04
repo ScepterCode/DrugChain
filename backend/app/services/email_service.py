@@ -1,6 +1,6 @@
 from typing import Optional
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class EmailService:
@@ -22,7 +22,7 @@ class EmailService:
     @staticmethod
     def generate_token_expiry(hours: int = 24) -> datetime:
         """Generate token expiry time"""
-        return datetime.utcnow() + timedelta(hours=hours)
+        return datetime.now(timezone.utc) + timedelta(hours=hours)
     
     @staticmethod
     async def send_verification_email(email: str, token: str, full_name: str) -> bool:

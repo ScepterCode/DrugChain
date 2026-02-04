@@ -39,8 +39,9 @@ async def log_requests(request: Request, call_next):
 
 # Get CORS origins from settings (which reads from .env)
 CORS_ORIGINS = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [
-    "https://pack-guard.vercel.app",  # Production frontend (NEW)
-    "https://drug-chain.vercel.app",  # Production frontend (OLD)
+    "https://packguard.vercel.app",   # Production frontend (NEW - no dash)
+    "https://pack-guard.vercel.app",  # Production frontend (OLD - with dash)
+    "https://drug-chain.vercel.app",  # Production frontend (LEGACY)
     "http://localhost:3000",         # Local dev (React)
     "http://localhost:5173",         # Local dev (Vite)
     "http://localhost:5174",         # Local dev (Vite alt)
@@ -93,11 +94,11 @@ async def health_check():
 @app.get("/deployment-test")
 async def deployment_test():
     """Test endpoint to verify latest code is deployed"""
-    import datetime
+    from datetime import datetime, timezone
     return {
         "message": "Latest code deployed successfully!",
         "deployment_timestamp": "2026-01-30T15:45:00Z",  # FORCE RESTART NOW: Updated timestamp
-        "server_time": datetime.datetime.utcnow().isoformat(),
+        "server_time": datetime.now(timezone.utc).isoformat(),
         "version": settings.APP_VERSION,
         "products_post_route_exists": True,  # Verification flag
         "categories_fix_applied": True,  # Verification flag

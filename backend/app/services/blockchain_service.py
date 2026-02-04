@@ -6,7 +6,7 @@ import json
 import hashlib
 import time
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 import logging
 from sqlalchemy.orm import Session
@@ -201,7 +201,7 @@ class BlockchainService:
                 to_entity,
                 "CARTON_TRANSFERRED",  # eventType
                 location,
-                datetime.utcnow().isoformat()  # timestamp
+                datetime.now(timezone.utc).isoformat()  # timestamp
             ]
         }
         
@@ -353,7 +353,7 @@ class BlockchainService:
                 "verified_on_blockchain": 980,
                 "blockchain_integrity_score": 99.8,
                 "consensus_nodes_active": 4,
-                "last_block_time": datetime.utcnow().isoformat(),
+                "last_block_time": datetime.now(timezone.utc).isoformat(),
                 "network_status": "HEALTHY"
             }
         except Exception as e:

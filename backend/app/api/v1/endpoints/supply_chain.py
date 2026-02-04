@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.db.session import get_db
 from app.api.dependencies import get_current_user, require_role
 from app.models import User, UserRole, Carton, Pack, Batch, Product, Organization
@@ -58,7 +58,7 @@ async def receive_stock(
         
         # Update carton holder
         carton.current_holder_id = current_user.organization_id
-        carton.last_transfer_date = datetime.utcnow()
+        carton.last_transfer_date = datetime.now(timezone.utc)
         
         # Get product info for response
         batch = db.query(Batch).filter(Batch.batch_id == carton.batch_id).first()
@@ -118,7 +118,7 @@ async def transfer_out(
         
         # Update carton holder
         carton.current_holder_id = request.transfer_to
-        carton.last_transfer_date = datetime.utcnow()
+        carton.last_transfer_date = datetime.now(timezone.utc)
         
         # Get product info for response
         batch = db.query(Batch).filter(Batch.batch_id == carton.batch_id).first()

@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # CORS - can be overridden by CORS_ORIGINS env var as comma-separated string
     CORS_ORIGINS: Union[List[str], str] = os.getenv(
         "CORS_ORIGINS",
-        "https://pack-guard.vercel.app,https://drug-chain.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173"
+        "https://packguard.vercel.app,https://pack-guard.vercel.app,https://drug-chain.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173"
     )
     
     # Celery

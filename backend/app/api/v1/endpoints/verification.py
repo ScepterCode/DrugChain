@@ -46,29 +46,38 @@ async def verify_carton(
     
     Supports both authenticated (logged-in users) and anonymous verification attempts
     """
-    client_ip = fastapi_req.client.host
-    
-    # Try to get authenticated user (optional - won't fail if not logged in)
-    current_user = None
     try:
-        from app.api.dependencies import oauth2_scheme
-        token = await oauth2_scheme(fastapi_req)
-        if token:
-            current_user = await get_current_user(token, db)
-    except:
-        # User is not authenticated - that's okay, we'll check phone_number instead
-        pass
-    
-    result = VerificationService.verify_carton_with_authorization(
-        db=db,
-        carton_id=request.carton_id,
-        ip_address=client_ip,
-        location=getattr(request, 'location', None),
-        phone_number=getattr(request, 'phone_number', None),
-        current_user=current_user
-    )
-    
-    return result
+        client_ip = fastapi_req.client.host
+        
+        # Try to get authenticated user (optional - won't fail if not logged in)
+        current_user = None
+        try:
+            from app.api.dependencies import oauth2_scheme
+            token = await oauth2_scheme(fastapi_req)
+            if token:
+                current_user = await get_current_user(token, db)
+        except:
+            # User is not authenticated - that's okay, we'll check phone_number instead
+            pass
+        
+        result = VerificationService.verify_carton_with_authorization(
+            db=db,
+            carton_id=request.carton_id,
+            ip_address=client_ip,
+            location=getattr(request, 'location', None),
+            phone_number=getattr(request, 'phone_number', None),
+            current_user=current_user
+        )
+        
+        return result
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Carton verification error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Carton verification failed: {str(e)}"
+        )
 
 
 # Keep the original endpoint for backward compatibility

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.db.session import get_db
 from app.models import Product, User, LuxurySpecification, Pack
@@ -44,7 +44,7 @@ async def generate_authenticity_certificate(
             "product_id": str(product_id),
             "pack_id": pack_id,
             "authenticity_verified": True,
-            "verification_date": datetime.utcnow().isoformat(),
+            "verification_date": datetime.now(timezone.utc).isoformat(),
             "verifier": current_user.full_name,
             "product_details": {
                 "brand": product.brand_name,
