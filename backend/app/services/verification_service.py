@@ -94,7 +94,7 @@ class VerificationService:
                     "entity_name": current_user.organization.organization_name if current_user.organization else "Unknown Organization",
                     "entity_type": current_user.role.value,
                     "entity_id": current_user.organization_id,
-                    "user_name": f"{current_user.first_name} {current_user.last_name}",
+                    "user_name": current_user.full_name,
                     "user_id": current_user.user_id
                 }
             else:

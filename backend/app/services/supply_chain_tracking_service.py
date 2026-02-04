@@ -209,7 +209,7 @@ class SupplyChainTrackingService:
                     "entity_name": user.organization.organization_name if user.organization else "Unknown Organization",
                     "entity_type": user.role.value,
                     "entity_id": user.organization_id,
-                    "user_name": f"{user.first_name} {user.last_name}"
+                    "user_name": user.full_name
                 }
         
         # For demo purposes, allow certain phone patterns
