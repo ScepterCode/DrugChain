@@ -155,7 +155,7 @@ class SupplyChainTrackingService:
         if phone_number.endswith("5678"):
             return {"entity_name": "MedDistribute Lagos", "entity_type": "DISTRIBUTOR"}
         elif phone_number.endswith("4321"):
-            return {"entity_name": "HealthPlus Pharmacy Ikeja", "entity_type": "PHARMACY"}
+            return {"entity_name": "HealthPlus Retailer Ikeja", "entity_type": "RETAILER"}
         elif phone_number.endswith("9999"):
             return {"entity_name": "WholeMed Distributors", "entity_type": "DISTRIBUTOR"}
         else:
@@ -188,7 +188,7 @@ class SupplyChainTrackingService:
     def verify_entity_authorization(db: Session, phone_number: str, entity_type: str = None) -> Dict[str, Any]:
         """
         Verify if an entity is authorized to scan carton codes
-        Supports MANUFACTURER, DISTRIBUTOR, RETAILER, PHARMACY, and REGULATOR roles
+        Supports MANUFACTURER, DISTRIBUTOR, RETAILER, and REGULATOR roles
         """
         if not phone_number:
             return {
@@ -200,7 +200,7 @@ class SupplyChainTrackingService:
         user = db.query(User).filter(User.phone_number == phone_number).first()
         
         if user:
-            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.PHARMACY, UserRole.RETAILER, 
+            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.RETAILER, 
                               UserRole.MANUFACTURER, UserRole.REGULATOR]
             
             if user.role in authorized_roles:
@@ -215,7 +215,7 @@ class SupplyChainTrackingService:
         # For demo purposes, allow certain phone patterns
         demo_patterns = {
             "5678": {"entity": "MedDistribute Lagos", "type": "DISTRIBUTOR"},
-            "4321": {"entity": "HealthPlus Pharmacy", "type": "PHARMACY"},
+            "4321": {"entity": "HealthPlus Retailer", "type": "RETAILER"},
             "9999": {"entity": "WholeMed Distributors", "type": "DISTRIBUTOR"}
         }
         
@@ -230,7 +230,7 @@ class SupplyChainTrackingService:
         
         return {
             "authorized": False,
-            "reason": "Not registered as authorized manufacturer, distributor, retailer, pharmacy, or regulator"
+            "reason": "Not registered as authorized manufacturer, distributor, retailer, or regulator"
         }
     
     @staticmethod

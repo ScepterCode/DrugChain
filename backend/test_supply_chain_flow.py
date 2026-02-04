@@ -57,19 +57,19 @@ def test_supply_chain_flow_system():
     
     print()
     
-    # Test 2: Pharmacy Scans Same Carton (Should Work)
-    print("🏥 TEST 2: PHARMACY SCANS SAME CARTON (SHOULD WORK)")
+    # Test 2: Retailer Scans Same Carton (Should Work)
+    print("🏥 TEST 2: RETAILER SCANS SAME CARTON (SHOULD WORK)")
     print("-" * 50)
     
-    pharmacy_phone = "+2348087654321"  # Authorized pharmacy
+    retailer_phone = "+2348087654321"  # Authorized retailer
     
     try:
         response = requests.post(
             "http://localhost:8000/api/v1/verify/carton",
             json={
                 "carton_id": carton_id,  # Same carton ID
-                "location": "HealthPlus Pharmacy Ikeja",
-                "phone_number": pharmacy_phone
+                "location": "HealthPlus Retailer Ikeja",
+                "phone_number": retailer_phone
             },
             headers={"Content-Type": "application/json"}
         )
@@ -181,12 +181,12 @@ def test_supply_chain_flow_system():
     print("📊 SUPPLY CHAIN FLOW VISUALIZATION")
     print("-" * 50)
     
-    print("🏭 MANUFACTURER → 🚚 DISTRIBUTOR → 🏥 PHARMACY → 👥 CONSUMER")
+    print("🏭 MANUFACTURER → 🚚 DISTRIBUTOR → 🏥 RETAILER → 👥 CONSUMER")
     print()
     print("Flow Tracking:")
     print("  1. Batch BATCH-2026-001 created with 5,000 cartons")
     print("  2. Distributor scans 2,000 cartons → Recorded in system")
-    print("  3. Pharmacy scans 20 cartons from distributor → Supply chain verified")
+    print("  3. Retailer scans 20 cartons from distributor → Supply chain verified")
     print("  4. Consumer scans individual pack → One-time verification")
     print("  5. All movements tracked on blockchain with cryptographic proof")
     print()

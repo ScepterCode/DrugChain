@@ -85,7 +85,7 @@ class VerificationService:
         if current_user:
             # User is logged in - check their role
             from app.models import UserRole
-            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.PHARMACY, UserRole.RETAILER, 
+            authorized_roles = [UserRole.DISTRIBUTOR, UserRole.RETAILER, 
                               UserRole.MANUFACTURER, UserRole.REGULATOR]
             
             if current_user.role in authorized_roles:
@@ -105,7 +105,7 @@ class VerificationService:
                     "data": {
                         "error_type": "UNAUTHORIZED_ROLE",
                         "user_role": current_user.role.value,
-                        "allowed_roles": ["MANUFACTURER", "DISTRIBUTOR", "RETAILER", "PHARMACY", "REGULATOR"],
+                        "allowed_roles": ["MANUFACTURER", "DISTRIBUTOR", "RETAILER", "REGULATOR"],
                         "allowed_action": "Scan individual pack codes (PK-XXXXXXXX) for product verification"
                     }
                 }
@@ -122,7 +122,7 @@ class VerificationService:
                         "error_type": "UNAUTHORIZED_CARTON_ACCESS",
                         "reason": auth_result.get("reason", "Not authorized"),
                         "allowed_action": "Log in to your account or scan individual pack codes (PK-XXXXXXXX) for product verification",
-                        "contact_info": "Contact your pharmacy or distributor for assistance"
+                        "contact_info": "Contact your retailer or distributor for assistance"
                     }
                 }
         

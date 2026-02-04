@@ -237,7 +237,7 @@ async def get_distributor_dashboard(
     current_user: User = Depends(require_role([UserRole.DISTRIBUTOR.value, UserRole.RETAILER.value])),
     db: Session = Depends(get_db)
 ):
-    """Get distributor/pharmacy dashboard statistics - REAL DATA ONLY"""
+    """Get distributor/retailer dashboard statistics - REAL DATA ONLY"""
     
     if not current_user.organization_id:
          return {"data": {
