@@ -1,9 +1,9 @@
 ﻿# Vercel Deployment Trigger
-# Last updated: 2026-02-04_16:13:08
+# Last updated: 2026-02-04_16:28:45
 # This file is used to force Vercel redeployments
 
-DEPLOYMENT_TRIGGER=2026-02-04_16:13:08
+DEPLOYMENT_TRIGGER=2026-02-04_16:28:45
 BUILD_OPTIMIZATION=true
 NODE_ENV=production
 FORCE_CLEAN_BUILD=true
-MIGRATION_STATUS=carton_migration_pending
+MIGRATION_STATUS=pack_id_length_fix_ready
