@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "installCommand": "npm ci --prefer-offline --no-audit --no-fund",
+  "functions": {
+    "app/api/**/*.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
@@ -10,6 +16,14 @@
   ],
   "env": {
     "VITE_APP_VERSION": "2.0.0",
-    "VITE_API_URL": "https://drugchain-1.onrender.com/api/v1"
+    "VITE_API_URL": "https://drugchain-1.onrender.com/api/v1",
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "NPM_CONFIG_PROGRESS": "false",
+      "NPM_CONFIG_LOGLEVEL": "error"
+    }
   }
 }

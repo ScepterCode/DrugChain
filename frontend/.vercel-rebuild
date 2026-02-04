@@ -1,2 +1,9 @@
-Force rebuild timestamp: 2026-01-21 21:20:00
-This file forces Vercel to do a fresh build without cache.
+﻿# Vercel Deployment Trigger
+# Last updated: 2026-02-04_16:13:08
+# This file is used to force Vercel redeployments
+
+DEPLOYMENT_TRIGGER=2026-02-04_16:13:08
+BUILD_OPTIMIZATION=true
+NODE_ENV=production
+FORCE_CLEAN_BUILD=true
+MIGRATION_STATUS=carton_migration_pending
