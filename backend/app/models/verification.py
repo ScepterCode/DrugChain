@@ -8,7 +8,7 @@ class VerificationEvent(Base):
     __tablename__ = "verification_events"
 
     event_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    pack_id = Column(String(16), ForeignKey("packs.pack_id"), nullable=True)  # Made nullable for carton verifications
+    pack_id = Column(String(50), nullable=True)  # Nullable for carton verifications, no FK constraint for flexibility
     carton_id = Column(String(50), nullable=True)  # Added for carton verifications
     verified_by_phone = Column(String(20))
     verified_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
