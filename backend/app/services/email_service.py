@@ -6,8 +6,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
+
+# Thread pool for non-blocking email sending
+email_executor = ThreadPoolExecutor(max_workers=3)
 
 
 class EmailService:
@@ -19,9 +24,10 @@ class EmailService:
     """
     
     @staticmethod
-    def _send_email(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+    def _send_email_sync(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
         """
-        Internal method to send email via SMTP
+        Synchronous internal method to send email via SMTP
+        This runs in a thread pool to avoid blocking
         
         Args:
             to_email: Recipient email address
@@ -59,8 +65,8 @@ class EmailService:
             message.attach(part1)
             message.attach(part2)
             
-            # Send email via SMTP
-            with smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT) as server:
+            # Send email via SMTP with timeout
+            with smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT, timeout=10) as server:
                 if settings.MAIL_STARTTLS:
                     server.starttls()
                 
@@ -86,6 +92,54 @@ class EmailService:
             {text_content}
             ========================================
             """)
+            return False
+    
+    @staticmethod
+    async def _send_email(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+        """
+        Async wrapper for email sending - runs in thread pool to avoid blocking
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            html_content: HTML version of email
+            text_content: Plain text version of email
+            
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        loop = asyncio.get_event_loop()
+        try:
+            # Run the synchronous SMTP code in a thread pool with timeout
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    email_executor,
+                    EmailService._send_email_sync,
+                    to_email,
+                    subject,
+                    html_content,
+                    text_content
+                ),
+                timeout=15.0  # 15 second timeout for the entire operation
+            )
+            return result
+        except asyncio.TimeoutError:
+            logger.error(f"Email sending timed out for {to_email}")
+            logger.info(f"Email to {to_email} will be logged to console due to timeout")
+            # Log to console as fallback
+            logger.info(f"""
+            ========================================
+            EMAIL (Timeout - Logged to Console)
+            ========================================
+            To: {to_email}
+            Subject: {subject}
+            
+            {text_content}
+            ========================================
+            """)
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error sending email to {to_email}: {str(e)}")
             return False
     
     @staticmethod
@@ -174,7 +228,7 @@ PackGuard Team
 </html>
 """
         
-        return EmailService._send_email(email, subject, html_content, text_content)
+        return await EmailService._send_email(email, subject, html_content, text_content)
     
     @staticmethod
     async def send_password_reset_email(email: str, token: str, full_name: str) -> bool:
@@ -255,7 +309,7 @@ PackGuard Team
 </html>
 """
         
-        return EmailService._send_email(email, subject, html_content, text_content)
+        return await EmailService._send_email(email, subject, html_content, text_content)
     
     @staticmethod
     async def send_welcome_email(email: str, full_name: str) -> bool:
@@ -328,7 +382,7 @@ PackGuard Team
 </html>
 """
         
-        return EmailService._send_email(email, subject, html_content, text_content)
+        return await EmailService._send_email(email, subject, html_content, text_content)
     
     @staticmethod
     async def send_account_locked_email(email: str, full_name: str, unlock_time: datetime) -> bool:
@@ -390,4 +444,4 @@ PackGuard Team
 </html>
 """
         
-        return EmailService._send_email(email, subject, html_content, text_content)
+        return await EmailService._send_email(email, subject, html_content, text_content)
