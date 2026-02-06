@@ -182,8 +182,8 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                             </p>
                         )}
                         <div className="mt-3 text-xs text-red-700">
-                            <p>🚨 Report to NAFDAC: +234-1-448-0772</p>
-                            <p>📧 Email: pharmacovigilance@nafdac.gov.ng</p>
+                            <p>📧 Contact PackGuard: Contact@packguard.org</p>
+                            <p>🚨 Report to NAFDAC: +234-1-448-0772 | pharmacovigilance@nafdac.gov.ng</p>
                         </div>
                     </div>
                 )}

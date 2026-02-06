@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Database - Supabase PostgreSQL
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+        "postgresql://postgres.aykzdgvdzmjhwsbjazon:YC5Er9AIs5vMeAmw@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
     )
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     MONGODB_DB_NAME: str = "drugchain_logs"
@@ -35,6 +35,21 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "https://aykzdgvdzmjhwsbjazon.supabase.co")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
+    
+    # Email Configuration (ADD THIS SECTION)
+    MAIL_USERNAME: str = os.getenv("MAIL_USERNAME", "")
+    MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD", "")
+    MAIL_FROM: str = os.getenv("MAIL_FROM", "noreply@packguard.org")
+    MAIL_FROM_NAME: str = os.getenv("MAIL_FROM_NAME", "PackGuard Team")
+    MAIL_PORT: int = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_SERVER: str = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_STARTTLS: bool = os.getenv("MAIL_STARTTLS", "True").lower() == "true"
+    MAIL_SSL_TLS: bool = os.getenv("MAIL_SSL_TLS", "False").lower() == "true"
+    USE_CREDENTIALS: bool = os.getenv("USE_CREDENTIALS", "True").lower() == "true"
+    VALIDATE_CERTS: bool = os.getenv("VALIDATE_CERTS", "True").lower() == "true"
+    
+    # Email sending mode
+    SEND_EMAILS: bool = os.getenv("SEND_EMAILS", "False").lower() == "true"
     
     # Blockchain
     FABRIC_NETWORK_URL: str = os.getenv("FABRIC_NETWORK_URL", "grpc://localhost:7051")
@@ -58,7 +73,7 @@ class Settings(BaseSettings):
     FABRIC_USER: str = "admin"
     BLOCKCHAIN_ENABLED: bool = os.getenv("BLOCKCHAIN_ENABLED", "True").lower() == "true"
     
-    # CORS - can be overridden by CORS_ORIGINS env var as comma-separated string
+    # CORS
     CORS_ORIGINS: Union[List[str], str] = os.getenv(
         "CORS_ORIGINS",
         "https://packguard.vercel.app,https://pack-guard.vercel.app,https://drug-chain.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5174,http://localhost:5173"
@@ -80,3 +95,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

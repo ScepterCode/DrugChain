@@ -59,6 +59,8 @@ class EmailService:
         
         If you didn't create this account, please ignore this email.
         
+        Need help? Contact us at Contact@packguard.org
+        
         Best regards,
         PackGuard Team
         ========================================
@@ -100,6 +102,8 @@ class EmailService:
         
         If you didn't request this, please ignore this email and your password will remain unchanged.
         
+        Need help? Contact us at Contact@packguard.org
+        
         Best regards,
         PackGuard Team
         ========================================
@@ -129,6 +133,8 @@ class EmailService:
         
         Get started: https://pack-guard.vercel.app/portal/dashboard
         
+        Need help? Contact us at Contact@packguard.org
+        
         Best regards,
         PackGuard Team
         ========================================
@@ -152,7 +158,7 @@ class EmailService:
         
         Your account will be automatically unlocked at: {unlock_time.strftime('%Y-%m-%d %H:%M:%S UTC')}
         
-        If this wasn't you, please contact support immediately.
+        If this wasn't you, please contact us immediately at Contact@packguard.org
         
         Best regards,
         PackGuard Team

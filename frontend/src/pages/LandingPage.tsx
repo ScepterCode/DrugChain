@@ -297,6 +297,9 @@ const LandingPage: React.FC = () => {
                             © 2026 PackGuard. Protecting consumers from counterfeit products worldwide.
                         </p>
                         <p className="mt-2 text-sm text-gray-400">
+                            Contact us: Contact@packguard.org
+                        </p>
+                        <p className="mt-1 text-sm text-gray-400">
                             Report suspicious products to NAFDAC: +234-1-448-0772 | pharmacovigilance@nafdac.gov.ng
                         </p>
                     </div>
