@@ -181,9 +181,9 @@ const VerificationResult: React.FC<VerificationResultProps> = ({ result, message
                                 Originally scanned: {new Date(data.first_scanned_at).toLocaleString()}
                             </p>
                         )}
-                        <div className="mt-3 text-xs text-red-700">
-                            <p>📧 Contact PackGuard: Contact@packguard.org</p>
-                            <p>🚨 Report to NAFDAC: +234-1-448-0772 | pharmacovigilance@nafdac.gov.ng</p>
+                        <div className="mt-3 text-xs text-red-700 space-y-1">
+                            <p>📧 <strong>Contact PackGuard:</strong> <a href="mailto:Contact@packguard.org" className="underline hover:text-red-800">Contact@packguard.org</a></p>
+                            <p>🚨 <strong>Report to NAFDAC:</strong> <a href="tel:+2341448-0772" className="underline hover:text-red-800">+234-1-448-0772</a> | <a href="mailto:pharmacovigilance@nafdac.gov.ng" className="underline hover:text-red-800">pharmacovigilance@nafdac.gov.ng</a></p>
                         </div>
                     </div>
                 )}

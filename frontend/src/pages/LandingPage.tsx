@@ -297,10 +297,10 @@ const LandingPage: React.FC = () => {
                             © 2026 PackGuard. Protecting consumers from counterfeit products worldwide.
                         </p>
                         <p className="mt-2 text-sm text-gray-400">
-                            Contact us: Contact@packguard.org
+                            📧 Contact PackGuard: <a href="mailto:Contact@packguard.org" className="text-primary-600 hover:text-primary-700">Contact@packguard.org</a>
                         </p>
                         <p className="mt-1 text-sm text-gray-400">
-                            Report suspicious products to NAFDAC: +234-1-448-0772 | pharmacovigilance@nafdac.gov.ng
+                            🚨 Report suspicious products to NAFDAC: <a href="tel:+2341448-0772" className="text-red-600 hover:text-red-700">+234-1-448-0772</a> | <a href="mailto:pharmacovigilance@nafdac.gov.ng" className="text-red-600 hover:text-red-700">pharmacovigilance@nafdac.gov.ng</a>
                         </p>
                     </div>
                 </div>

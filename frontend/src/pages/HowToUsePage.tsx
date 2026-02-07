@@ -423,10 +423,11 @@ const HowToUsePage: React.FC = () => {
                                         </p>
                                         <div className="bg-red-50 p-4 rounded-lg">
                                             <ul className="list-disc list-inside text-red-700 space-y-1">
-                                                <li><strong>DO NOT</strong> consume the medication</li>
-                                                <li>Return to the pharmacy immediately</li>
+                                                <li><strong>DO NOT</strong> consume the product</li>
+                                                <li>Return to the retailer immediately</li>
                                                 <li>Report the incident through our platform</li>
-                                                <li>Contact NAFDAC if necessary</li>
+                                                <li>📧 Contact PackGuard: <a href="mailto:Contact@packguard.org" className="underline hover:text-red-800">Contact@packguard.org</a></li>
+                                                <li>🚨 Report to NAFDAC: <a href="tel:+2341448-0772" className="underline hover:text-red-800">+234-1-448-0772</a> | <a href="mailto:pharmacovigilance@nafdac.gov.ng" className="underline hover:text-red-800">pharmacovigilance@nafdac.gov.ng</a></li>
                                             </ul>
                                         </div>
                                     </div>

@@ -159,6 +159,7 @@ async def request_password_reset(
     """
     from app.services.email_service import EmailService
     from app.services.audit_service import AuditService
+    from app.services.supabase_auth_service import supabase_auth
     
     user = db.query(User).filter(User.email == request.email).first()
     
@@ -169,8 +170,11 @@ async def request_password_reset(
         user.password_reset_token_expires = EmailService.generate_token_expiry(hours=1)
         db.commit()
         
-        # Send reset email
-        await EmailService.send_password_reset_email(request.email, reset_token, user.full_name)
+        # ACTUALLY SEND THE EMAIL via Supabase
+        try:
+            await supabase_auth.send_password_reset_email(request.email)
+        except Exception as e:
+            logger.error(f"Failed to send password reset email via Supabase: {e}")
         
         # Log the request
         AuditService.log_password_reset_request(db, request.email)
@@ -277,6 +281,7 @@ async def resend_verification_email(
 ):
     """Resend email verification"""
     from app.services.email_service import EmailService
+    from app.services.supabase_auth_service import supabase_auth
     
     user = db.query(User).filter(User.email == request.email).first()
     
@@ -298,6 +303,12 @@ async def resend_verification_email(
     user.email_verification_token = verification_token
     user.email_verification_token_expires = EmailService.generate_token_expiry(hours=24)
     db.commit()
+    
+    # ACTUALLY SEND THE EMAIL via Supabase
+    try:
+        await supabase_auth.send_verification_email(user.email)
+    except Exception as e:
+        logger.error(f"Failed to send verification email via Supabase: {e}")
     
     # Send verification email
     await EmailService.send_verification_email(user.email, verification_token, user.full_name)
