@@ -233,16 +233,23 @@ class SMTPEmailService:
     async def _send_email_async(to_email: str, subject: str, html_body: str, email_type: str) -> bool:
         """
         Run the sync email sending method in a separate thread to avoid blocking the event loop.
-        Uses asyncio.to_thread() which is the modern, correct approach for Python 3.9+
+        Uses asyncio.to_thread() with a timeout to ensure we never hang.
         """
         try:
-            return await asyncio.to_thread(
-                SMTPEmailService._send_email_sync, 
-                to_email, 
-                subject, 
-                html_body, 
-                email_type
+            # Wrap in wait_for to ensure we never hang - 15 second timeout
+            return await asyncio.wait_for(
+                asyncio.to_thread(
+                    SMTPEmailService._send_email_sync, 
+                    to_email, 
+                    subject, 
+                    html_body, 
+                    email_type
+                ),
+                timeout=15.0
             )
+        except asyncio.TimeoutError:
+            logger.error(f"Email sending timed out after 15 seconds for {email_type} to {to_email}")
+            return False
         except Exception as e:
             logger.error(f"Error in async email sending: {e}")
             return False
