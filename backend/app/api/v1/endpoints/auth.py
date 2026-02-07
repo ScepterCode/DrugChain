@@ -168,7 +168,7 @@ async def verify_email(
     
     This endpoint verifies the token stored in our database (not Supabase).
     """
-    from app.services.smtp_email_service import SMTPEmailService
+    from app.services.resend_email_service import ResendEmailService
     
     # Find user with valid token
     user = db.query(User).filter(
@@ -192,7 +192,7 @@ async def verify_email(
     
     # Send welcome email
     try:
-        await SMTPEmailService.send_welcome_email(user.email, user.full_name)
+        await ResendEmailService.send_welcome_email(user.email, user.full_name)
     except Exception as e:
         logger.warning(f"Failed to send welcome email: {e}")
     
@@ -212,7 +212,7 @@ async def resend_verification_email(
     
     Generates a new token and sends verification email via SMTP.
     """
-    from app.services.smtp_email_service import SMTPEmailService
+    from app.services.resend_email_service import ResendEmailService
     
     user = db.query(User).filter(User.email == request.email).first()
     
@@ -230,14 +230,14 @@ async def resend_verification_email(
         )
     
     # Generate new token
-    verification_token = SMTPEmailService.generate_token()
+    verification_token = ResendEmailService.generate_token()
     user.email_verification_token = verification_token
-    user.email_verification_token_expires = SMTPEmailService.generate_token_expiry(hours=24)
+    user.email_verification_token_expires = ResendEmailService.generate_token_expiry(hours=24)
     db.commit()
     
     # Send verification email via SMTP
     try:
-        email_sent = await SMTPEmailService.send_verification_email(
+        email_sent = await ResendEmailService.send_verification_email(
             user.email, 
             verification_token, 
             user.full_name
@@ -264,21 +264,21 @@ async def request_password_reset(
     Always returns success to prevent email enumeration.
     Sends password reset email via SMTP.
     """
-    from app.services.smtp_email_service import SMTPEmailService
+    from app.services.resend_email_service import ResendEmailService
     from app.services.audit_service import AuditService
     
     user = db.query(User).filter(User.email == request.email).first()
     
     if user:
         # Generate reset token
-        reset_token = SMTPEmailService.generate_token()
+        reset_token = ResendEmailService.generate_token()
         user.password_reset_token = reset_token
-        user.password_reset_token_expires = SMTPEmailService.generate_token_expiry(hours=1)
+        user.password_reset_token_expires = ResendEmailService.generate_token_expiry(hours=1)
         db.commit()
         
         # Send password reset email via SMTP
         try:
-            email_sent = await SMTPEmailService.send_password_reset_email(
+            email_sent = await ResendEmailService.send_password_reset_email(
                 request.email, 
                 reset_token, 
                 user.full_name

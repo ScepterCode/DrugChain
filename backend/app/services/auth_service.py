@@ -89,17 +89,17 @@ class AuthService:
             db.flush()  # Get user_id but don't commit yet
             
             # Generate and store verification token
-            from app.services.smtp_email_service import SMTPEmailService
-            verification_token = SMTPEmailService.generate_token()
+            from app.services.resend_email_service import ResendEmailService
+            verification_token = ResendEmailService.generate_token()
             new_user.email_verification_token = verification_token
-            new_user.email_verification_token_expires = SMTPEmailService.generate_token_expiry(hours=24)
+            new_user.email_verification_token_expires = ResendEmailService.generate_token_expiry(hours=24)
             
             db.commit()
             db.refresh(new_user)
             
-            # Send verification email via SMTP
+            # Send verification email via Resend
             try:
-                email_sent = await SMTPEmailService.send_verification_email(
+                email_sent = await ResendEmailService.send_verification_email(
                     new_user.email, 
                     verification_token, 
                     new_user.full_name

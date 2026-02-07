@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Email sending mode
     SEND_EMAILS: bool = os.getenv("SEND_EMAILS", "False").lower() == "true"
     
+    # Resend API (preferred email service - uses HTTP instead of SMTP)
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    
     # Frontend URL for email links
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     
