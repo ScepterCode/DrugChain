@@ -1,11 +1,13 @@
 """
 SMTP Email Service - Pure Python implementation
 Uses Python's built-in smtplib to avoid fastapi-mail compatibility issues.
+Run in thread pool to avoid blocking async event loop.
 """
 import logging
 import secrets
 import smtplib
 import ssl
+import asyncio
 from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -37,17 +39,7 @@ class SMTPEmailService:
     
     @staticmethod
     async def send_verification_email(email: str, token: str, full_name: str) -> bool:
-        """
-        Send email verification email.
-        
-        Args:
-            email: Recipient email
-            token: Verification token
-            full_name: User's full name
-        
-        Returns:
-            True if email was sent/logged successfully
-        """
+        """Send email verification email (async wrapper)"""
         verification_url = f"{SMTPEmailService.FRONTEND_URL}/verify-email?token={token}"
         
         subject = "Verify Your PackGuard Account"
@@ -89,21 +81,11 @@ class SMTPEmailService:
         </html>
         """
         
-        return await SMTPEmailService._send_email(email, subject, html_body, "verification")
+        return await SMTPEmailService._send_email_async(email, subject, html_body, "verification")
     
     @staticmethod
     async def send_password_reset_email(email: str, token: str, full_name: str) -> bool:
-        """
-        Send password reset email.
-        
-        Args:
-            email: Recipient email
-            token: Reset token
-            full_name: User's full name
-        
-        Returns:
-            True if email was sent/logged successfully
-        """
+        """Send password reset email (async wrapper)"""
         reset_url = f"{SMTPEmailService.FRONTEND_URL}/reset-password?token={token}"
         
         subject = "Reset Your PackGuard Password"
@@ -147,20 +129,11 @@ class SMTPEmailService:
         </html>
         """
         
-        return await SMTPEmailService._send_email(email, subject, html_body, "password_reset")
+        return await SMTPEmailService._send_email_async(email, subject, html_body, "password_reset")
     
     @staticmethod
     async def send_welcome_email(email: str, full_name: str) -> bool:
-        """
-        Send welcome email after email verification.
-        
-        Args:
-            email: Recipient email
-            full_name: User's full name
-        
-        Returns:
-            True if email was sent/logged successfully
-        """
+        """Send welcome email (async wrapper)"""
         login_url = f"{SMTPEmailService.FRONTEND_URL}/login"
         
         subject = "Welcome to PackGuard!"
@@ -207,21 +180,11 @@ class SMTPEmailService:
         </html>
         """
         
-        return await SMTPEmailService._send_email(email, subject, html_body, "welcome")
+        return await SMTPEmailService._send_email_async(email, subject, html_body, "welcome")
     
     @staticmethod
     async def send_account_locked_email(email: str, full_name: str, unlock_time: datetime) -> bool:
-        """
-        Send account locked notification email.
-        
-        Args:
-            email: Recipient email
-            full_name: User's full name
-            unlock_time: When the account will be unlocked
-        
-        Returns:
-            True if email was sent/logged successfully
-        """
+        """Send account locked email (async wrapper)"""
         subject = "PackGuard Account Security Alert"
         html_body = f"""
         <!DOCTYPE html>
@@ -264,21 +227,27 @@ class SMTPEmailService:
         </html>
         """
         
-        return await SMTPEmailService._send_email(email, subject, html_body, "account_locked")
+        return await SMTPEmailService._send_email_async(email, subject, html_body, "account_locked")
     
     @staticmethod
-    async def _send_email(to_email: str, subject: str, html_body: str, email_type: str) -> bool:
+    async def _send_email_async(to_email: str, subject: str, html_body: str, email_type: str) -> bool:
         """
-        Internal method to send email via SMTP or log to console.
-        
-        Args:
-            to_email: Recipient email address
-            subject: Email subject
-            html_body: HTML content of the email
-            email_type: Type of email for logging purposes
-        
-        Returns:
-            True if successful
+        Run the sync email sending method in a separate thread to avoid blocking the event loop.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, 
+            SMTPEmailService._send_email_sync, 
+            to_email, 
+            subject, 
+            html_body, 
+            email_type
+        )
+
+    @staticmethod
+    def _send_email_sync(to_email: str, subject: str, html_body: str, email_type: str) -> bool:
+        """
+        Synchronous method to email via SMTP or log to console.
         """
         # Check if we should actually send emails
         send_emails = getattr(settings, 'SEND_EMAILS', False)
@@ -331,6 +300,8 @@ class SMTPEmailService:
             else:
                 # Use STARTTLS (port 587)
                 with smtplib.SMTP(mail_server, mail_port) as server:
+                    # Set timeout for connection
+                    server.timeout = 10 
                     if use_tls:
                         context = ssl.create_default_context()
                         server.starttls(context=context)
