@@ -15,7 +15,6 @@ class AuthService:
     @staticmethod
     async def register_user(db: Session, user_data: UserCreate) -> dict:
         """Register a new user with organization"""
-        from app.services.supabase_auth_service import supabase_auth
         
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -87,12 +86,26 @@ class AuthService:
             )
             
             db.add(new_user)
+            db.flush()  # Get user_id but don't commit yet
+            
+            # Generate and store verification token
+            from app.services.smtp_email_service import SMTPEmailService
+            verification_token = SMTPEmailService.generate_token()
+            new_user.email_verification_token = verification_token
+            new_user.email_verification_token_expires = SMTPEmailService.generate_token_expiry(hours=24)
+            
             db.commit()
             db.refresh(new_user)
             
-            # Send verification email via Supabase
+            # Send verification email via SMTP
             try:
-                await supabase_auth.send_verification_email(new_user.email)
+                email_sent = await SMTPEmailService.send_verification_email(
+                    new_user.email, 
+                    verification_token, 
+                    new_user.full_name
+                )
+                if not email_sent:
+                    print(f"Warning: Failed to send verification email to {new_user.email}")
             except Exception as e:
                 # Log but don't fail registration if email fails
                 print(f"Email verification send failed: {e}")

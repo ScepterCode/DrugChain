@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Email sending mode
     SEND_EMAILS: bool = os.getenv("SEND_EMAILS", "False").lower() == "true"
     
+    # Frontend URL for email links
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
     # Blockchain
     FABRIC_NETWORK_URL: str = os.getenv("FABRIC_NETWORK_URL", "grpc://localhost:7051")
     FABRIC_CHAINCODE_NAME: str = "drugchain"

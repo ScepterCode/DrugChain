@@ -2,15 +2,26 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+from pydantic import BaseModel
+import logging
+
 from app.db.session import get_db
 from app.schemas import UserCreate, UserResponse, Token, EmailRequest
 from app.services.auth_service import AuthService
-from app.core.security import create_access_token, create_refresh_token
+from app.core.security import create_access_token, create_refresh_token, get_password_hash
 from app.api.dependencies import get_current_user
 from app.models import User
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+
+# Request models for password reset
+class PasswordResetRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
@@ -147,103 +158,17 @@ async def logout():
     }
 
 
-@router.post("/request-password-reset")
-async def request_password_reset(
-    request: EmailRequest,
-    db: Session = Depends(get_db)
-):
-    """
-    Request password reset email
-    
-    Always returns success to prevent email enumeration
-    """
-    from app.services.email_service import EmailService
-    from app.services.audit_service import AuditService
-    from app.services.supabase_auth_service import supabase_auth
-    
-    user = db.query(User).filter(User.email == request.email).first()
-    
-    if user:
-        # Generate reset token
-        reset_token = EmailService.generate_token()
-        user.password_reset_token = reset_token
-        user.password_reset_token_expires = EmailService.generate_token_expiry(hours=1)
-        db.commit()
-        
-        # ACTUALLY SEND THE EMAIL via Supabase
-        try:
-            await supabase_auth.send_password_reset_email(request.email)
-        except Exception as e:
-            logger.error(f"Failed to send password reset email via Supabase: {e}")
-        
-        # Log the request
-        AuditService.log_password_reset_request(db, request.email)
-    
-    # Always return success to prevent email enumeration
-    return {
-        "success": True,
-        "message": "If an account exists with this email, a password reset link has been sent"
-    }
-
-
-@router.post("/reset-password")
-async def reset_password(
-    token: str,
-    new_password: str,
-    db: Session = Depends(get_db)
-):
-    """Reset password using reset token"""
-    from datetime import datetime
-    from app.services.password_policy import PasswordPolicy
-    from app.services.audit_service import AuditService
-    
-    # Validate new password
-    is_valid, errors = PasswordPolicy.validate_password(new_password)
-    if not is_valid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Password does not meet requirements", "errors": errors}
-        )
-    
-    # Find user with valid token
-    user = db.query(User).filter(
-        User.password_reset_token == token,
-        User.password_reset_token_expires > datetime.now(timezone.utc)
-    ).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
-        )
-    
-    # Update password
-    user.password_hash = get_password_hash(new_password)
-    user.password_reset_token = None
-    user.password_reset_token_expires = None
-    user.password_changed_at = datetime.now(timezone.utc)
-    user.failed_login_attempts = 0  # Reset failed attempts
-    user.account_locked_until = None  # Unlock account if locked
-    
-    db.commit()
-    
-    # Log password change
-    AuditService.log_password_change(db, str(user.user_id))
-    
-    return {
-        "success": True,
-        "message": "Password reset successfully. You can now login with your new password"
-    }
-
-
 @router.post("/verify-email")
 async def verify_email(
     token: str,
     db: Session = Depends(get_db)
 ):
-    """Verify email using verification token"""
-    from datetime import datetime
-    from app.services.email_service import EmailService
+    """
+    Verify email using verification token.
+    
+    This endpoint verifies the token stored in our database (not Supabase).
+    """
+    from app.services.smtp_email_service import SMTPEmailService
     
     # Find user with valid token
     user = db.query(User).filter(
@@ -266,7 +191,10 @@ async def verify_email(
     db.commit()
     
     # Send welcome email
-    await EmailService.send_welcome_email(user.email, user.full_name)
+    try:
+        await SMTPEmailService.send_welcome_email(user.email, user.full_name)
+    except Exception as e:
+        logger.warning(f"Failed to send welcome email: {e}")
     
     return {
         "success": True,
@@ -279,9 +207,12 @@ async def resend_verification_email(
     request: EmailRequest,
     db: Session = Depends(get_db)
 ):
-    """Resend email verification"""
-    from app.services.email_service import EmailService
-    from app.services.supabase_auth_service import supabase_auth
+    """
+    Resend email verification.
+    
+    Generates a new token and sends verification email via SMTP.
+    """
+    from app.services.smtp_email_service import SMTPEmailService
     
     user = db.query(User).filter(User.email == request.email).first()
     
@@ -299,19 +230,22 @@ async def resend_verification_email(
         )
     
     # Generate new token
-    verification_token = EmailService.generate_token()
+    verification_token = SMTPEmailService.generate_token()
     user.email_verification_token = verification_token
-    user.email_verification_token_expires = EmailService.generate_token_expiry(hours=24)
+    user.email_verification_token_expires = SMTPEmailService.generate_token_expiry(hours=24)
     db.commit()
     
-    # ACTUALLY SEND THE EMAIL via Supabase
+    # Send verification email via SMTP
     try:
-        await supabase_auth.send_verification_email(user.email)
+        email_sent = await SMTPEmailService.send_verification_email(
+            user.email, 
+            verification_token, 
+            user.full_name
+        )
+        if not email_sent:
+            logger.error(f"Failed to send verification email to {user.email}")
     except Exception as e:
-        logger.error(f"Failed to send verification email via Supabase: {e}")
-    
-    # Send verification email
-    await EmailService.send_verification_email(user.email, verification_token, user.full_name)
+        logger.error(f"Error sending verification email: {e}")
     
     return {
         "success": True,
@@ -319,9 +253,114 @@ async def resend_verification_email(
     }
 
 
+@router.post("/request-password-reset")
+async def request_password_reset(
+    request: EmailRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Request password reset email.
+    
+    Always returns success to prevent email enumeration.
+    Sends password reset email via SMTP.
+    """
+    from app.services.smtp_email_service import SMTPEmailService
+    from app.services.audit_service import AuditService
+    
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    if user:
+        # Generate reset token
+        reset_token = SMTPEmailService.generate_token()
+        user.password_reset_token = reset_token
+        user.password_reset_token_expires = SMTPEmailService.generate_token_expiry(hours=1)
+        db.commit()
+        
+        # Send password reset email via SMTP
+        try:
+            email_sent = await SMTPEmailService.send_password_reset_email(
+                request.email, 
+                reset_token, 
+                user.full_name
+            )
+            if not email_sent:
+                logger.error(f"Failed to send password reset email to {request.email}")
+        except Exception as e:
+            logger.error(f"Error sending password reset email: {e}")
+        
+        # Log the request
+        try:
+            AuditService.log_password_reset_request(db, request.email)
+        except Exception as e:
+            logger.warning(f"Failed to log password reset request: {e}")
+    
+    # Always return success to prevent email enumeration
+    return {
+        "success": True,
+        "message": "If an account exists with this email, a password reset link has been sent"
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: PasswordResetRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Reset password using reset token.
+    
+    Validates the token and updates the password.
+    """
+    from app.services.password_policy import PasswordPolicy
+    from app.services.audit_service import AuditService
+    
+    # Validate new password
+    is_valid, errors = PasswordPolicy.validate_password(request.new_password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"message": "Password does not meet requirements", "errors": errors}
+        )
+    
+    # Find user with valid token
+    user = db.query(User).filter(
+        User.password_reset_token == request.token,
+        User.password_reset_token_expires > datetime.now(timezone.utc)
+    ).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Update password
+    user.password_hash = get_password_hash(request.new_password)
+    user.password_reset_token = None
+    user.password_reset_token_expires = None
+    user.password_changed_at = datetime.now(timezone.utc)
+    user.failed_login_attempts = 0  # Reset failed attempts
+    user.account_locked_until = None  # Unlock account if locked
+    
+    db.commit()
+    
+    # Log password change
+    try:
+        AuditService.log_password_change(db, str(user.user_id))
+    except Exception as e:
+        logger.warning(f"Failed to log password change: {e}")
+    
+    return {
+        "success": True,
+        "message": "Password reset successfully. You can now login with your new password"
+    }
+
+
 @router.post("/validate-password")
 async def validate_password(password: str):
-    """Validate password against policy (for frontend validation)"""
+    """
+    Validate password against policy (for frontend validation).
+    """
     from app.services.password_policy import PasswordPolicy
     
     is_valid, errors = PasswordPolicy.validate_password(password)
@@ -332,87 +371,3 @@ async def validate_password(password: str):
         "errors": errors,
         "strength": strength
     }
-
-
-@router.post("/verify-email")
-async def verify_email(
-    token: str,
-    db: Session = Depends(get_db)
-):
-    """Verify email using Supabase Auth token"""
-    from app.services.supabase_auth_service import supabase_auth
-    
-    # Verify token with Supabase
-    result = await supabase_auth.verify_email_token(token)
-    
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token"
-        )
-    
-    # Extract email from result
-    email = result.get("user", {}).get("email")
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not extract email from token"
-        )
-    
-    # Update user verification status
-    user = db.query(User).filter(User.email == email).first()
-    if user:
-        user.is_verified = True
-        db.commit()
-        return {"message": "Email verified successfully"}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-
-
-@router.post("/request-password-reset")
-async def request_password_reset(
-    email: str,
-    db: Session = Depends(get_db)
-):
-    """Request password reset using Supabase Auth"""
-    from app.services.supabase_auth_service import supabase_auth
-    
-    # Check if user exists
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        # Don't reveal if user exists or not
-        return {"message": "If the email exists, a password reset link has been sent"}
-    
-    # Send password reset email via Supabase
-    success = await supabase_auth.send_password_reset_email(email)
-    
-    return {"message": "If the email exists, a password reset link has been sent"}
-
-
-@router.post("/reset-password")
-async def reset_password(
-    token: str,
-    new_password: str,
-    db: Session = Depends(get_db)
-):
-    """Reset password using Supabase Auth"""
-    from app.services.supabase_auth_service import supabase_auth
-    from app.core.security import get_password_hash
-    
-    # Update password via Supabase
-    success = await supabase_auth.update_password(token, new_password)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
-        )
-    
-    # Also update password hash in our database
-    # Extract user info from token (simplified - in production, decode JWT properly)
-    # For now, we'll just return success
-    
-    return {"message": "Password reset successfully"}
