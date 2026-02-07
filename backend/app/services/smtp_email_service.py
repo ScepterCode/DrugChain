@@ -1,57 +1,24 @@
 """
-SMTP Email Service - Actually sends emails!
-Uses fastapi-mail for reliable SMTP delivery with fallback to console logging.
+SMTP Email Service - Pure Python implementation
+Uses Python's built-in smtplib to avoid fastapi-mail compatibility issues.
 """
 import logging
 import secrets
+import smtplib
+import ssl
 from datetime import datetime, timedelta, timezone
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import Optional
-from pathlib import Path
-
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from pydantic import EmailStr
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def get_mail_config() -> Optional[ConnectionConfig]:
-    """
-    Get mail configuration if credentials are available.
-    Returns None if SMTP is not configured.
-    """
-    # Check if email credentials are configured
-    if not settings.MAIL_USERNAME or not settings.MAIL_PASSWORD:
-        logger.warning("Email credentials not configured - emails will be logged only")
-        return None
-    
-    try:
-        conf = ConnectionConfig(
-            MAIL_USERNAME=settings.MAIL_USERNAME,
-            MAIL_PASSWORD=settings.MAIL_PASSWORD,
-            MAIL_FROM=settings.MAIL_FROM,
-            MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
-            MAIL_PORT=settings.MAIL_PORT,
-            MAIL_SERVER=settings.MAIL_SERVER,
-            MAIL_STARTTLS=settings.MAIL_STARTTLS,
-            MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
-            USE_CREDENTIALS=settings.USE_CREDENTIALS,
-            VALIDATE_CERTS=settings.VALIDATE_CERTS,
-        )
-        return conf
-    except Exception as e:
-        logger.error(f"Failed to create mail configuration: {e}")
-        return None
-
-
-# Initialize mail config
-mail_config = get_mail_config()
-
-
 class SMTPEmailService:
     """
-    Email service using SMTP for actual email delivery.
+    Email service using Python's built-in smtplib for SMTP delivery.
     Falls back to console logging if SMTP is not configured.
     """
     
@@ -313,12 +280,12 @@ class SMTPEmailService:
         Returns:
             True if successful
         """
-        global mail_config
-        
         # Check if we should actually send emails
         send_emails = getattr(settings, 'SEND_EMAILS', False)
+        mail_username = getattr(settings, 'MAIL_USERNAME', '')
+        mail_password = getattr(settings, 'MAIL_PASSWORD', '')
         
-        if not send_emails or mail_config is None:
+        if not send_emails or not mail_username or not mail_password:
             # Log to console instead of sending
             logger.info(f"""
 ╔══════════════════════════════════════════════════════════════╗
@@ -336,19 +303,50 @@ class SMTPEmailService:
             return True
         
         try:
-            message = MessageSchema(
-                subject=subject,
-                recipients=[to_email],
-                body=html_body,
-                subtype=MessageType.html
-            )
+            # Get SMTP settings with defaults
+            mail_server = getattr(settings, 'MAIL_SERVER', 'smtp.gmail.com')
+            mail_port = getattr(settings, 'MAIL_PORT', 587)
+            mail_from = getattr(settings, 'MAIL_FROM', mail_username)
+            mail_from_name = getattr(settings, 'MAIL_FROM_NAME', 'PackGuard')
+            use_tls = getattr(settings, 'MAIL_STARTTLS', True)
+            use_ssl = getattr(settings, 'MAIL_SSL_TLS', False)
             
-            fm = FastMail(mail_config)
-            await fm.send_message(message)
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"{mail_from_name} <{mail_from}>"
+            message["To"] = to_email
+            
+            # Attach HTML content
+            html_part = MIMEText(html_body, "html")
+            message.attach(html_part)
+            
+            # Send email
+            if use_ssl:
+                # Use SSL from the start (port 465)
+                context = ssl.create_default_context()
+                with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                    server.login(mail_username, mail_password)
+                    server.sendmail(mail_from, to_email, message.as_string())
+            else:
+                # Use STARTTLS (port 587)
+                with smtplib.SMTP(mail_server, mail_port) as server:
+                    if use_tls:
+                        context = ssl.create_default_context()
+                        server.starttls(context=context)
+                    server.login(mail_username, mail_password)
+                    server.sendmail(mail_from, to_email, message.as_string())
             
             logger.info(f"✅ Email sent successfully: {email_type} to {to_email}")
             return True
             
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"❌ SMTP Authentication failed: {e}")
+            logger.error("Check your MAIL_USERNAME and MAIL_PASSWORD (use App Password for Gmail)")
+            return False
+        except smtplib.SMTPException as e:
+            logger.error(f"❌ SMTP error sending {email_type} to {to_email}: {e}")
+            return False
         except Exception as e:
             logger.error(f"❌ Failed to send {email_type} email to {to_email}: {e}")
             return False
