@@ -71,7 +71,7 @@ const RegisterPage: React.FC = () => {
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-            setSuccessMessage('Registration successful! Please check your email to verify your account.');
+            setSuccessMessage('Registration successful! You can now log in and access all features.');
             // Don't navigate immediately, let user see the success message
             setTimeout(() => {
                 navigate('/portal/dashboard');

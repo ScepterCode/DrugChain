@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
     children, 
-    requireEmailVerification = false,
+    requireEmailVerification = false,  // Kept for compatibility but not enforced
     allowedRoles 
 }) => {
     const { isAuthenticated, user } = useAppSelector((state) => state.auth);
@@ -26,10 +26,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to="/portal/dashboard" replace />;
     }
 
-    // Check email verification requirement
-    if (requireEmailVerification && !user.is_verified) {
-        return <Navigate to="/portal/verify-email-required" replace />;
-    }
+    // Email verification check disabled - all users can access all features
+    // if (requireEmailVerification && !user.is_verified) {
+    //     return <Navigate to="/portal/verify-email-required" replace />;
+    // }
 
     return <>{children}</>;
 };

@@ -74,7 +74,7 @@ class AuthService:
                     detail=f"Invalid role: {user_data.role}"
                 )
             
-            # Create user (not verified until email is confirmed)
+            # Create user (auto-verified - email verification disabled for now)
             new_user = User(
                 email=user_data.email,
                 password_hash=get_password_hash(user_data.password),
@@ -82,33 +82,18 @@ class AuthService:
                 phone_number=user_data.phone_number,
                 role=user_role,
                 organization_id=organization.organization_id if organization else None,
-                is_verified=False  # Will be verified via Supabase email
+                is_verified=True,  # Auto-verify - email verification disabled
+                email_verified_at=datetime.now(timezone.utc)  # Set verification time
             )
             
             db.add(new_user)
             db.flush()  # Get user_id but don't commit yet
             
-            # Generate and store verification token
-            from app.services.resend_email_service import ResendEmailService
-            verification_token = ResendEmailService.generate_token()
-            new_user.email_verification_token = verification_token
-            new_user.email_verification_token_expires = ResendEmailService.generate_token_expiry(hours=24)
+            # Email verification disabled - skip token generation
+            # Users are auto-verified on registration
             
             db.commit()
             db.refresh(new_user)
-            
-            # Send verification email via Resend
-            try:
-                email_sent = await ResendEmailService.send_verification_email(
-                    new_user.email, 
-                    verification_token, 
-                    new_user.full_name
-                )
-                if not email_sent:
-                    print(f"Warning: Failed to send verification email to {new_user.email}")
-            except Exception as e:
-                # Log but don't fail registration if email fails
-                print(f"Email verification send failed: {e}")
             
             # Generate tokens
             access_token = create_access_token(
@@ -127,7 +112,7 @@ class AuthService:
                 "access_token": access_token,
                 "refresh_token": refresh_token,
                 "token_type": "bearer",
-                "message": "Registration successful. Please check your email to verify your account."
+                "message": "Registration successful. You can now access all features."
             }
             
         except IntegrityError as e:
